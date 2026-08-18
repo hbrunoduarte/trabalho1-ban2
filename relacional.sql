@@ -53,7 +53,9 @@ CREATE TABLE Imovel (
     ano_construcao INT NOT NULL,
     descricao VARCHAR(150) NOT NULL,
     valor TIPO_VALOR NOT NULL,
-    status VARCHAR(30) NOT NULL, -- disponível para venda, disponível para locação, vendido, alugado ou indisponível
+    status VARCHAR(30) NOT NULL CHECK (
+        status IN ('disponível para venda', 'disponível para locação', 'vendido', 'alugado', 'indisponível')
+    ), -- disponível para venda, disponível para locação, vendido, alugado ou indisponível
     PRIMARY KEY (id_imovel),
     FOREIGN KEY (id_endereco) REFERENCES Endereco (id_endereco),
     FOREIGN KEY (id_proprietario) REFERENCES Proprietario (id_proprietario)
@@ -131,10 +133,14 @@ CREATE TABLE Contrato_Venda (
 CREATE TABLE Contrato_Locacao (
     id_locacao SERIAL,
     prazo_mes INT NOT NULL,
-    garantia VARCHAR(30), -- "FIADOR", "SEGURO FIANCA" ou "DEPOSITO CAUCAO"
+    garantia VARCHAR(30) CHECK (
+        garantia IN ('FIADOR', 'SEGURO FIANCA', 'DEPOSITO CAUCAO')
+    ), -- "FIADOR", "SEGURO FIANCA" ou "DEPOSITO CAUCAO"
     valor_caucao TIPO_VALOR,
     valor_comissao TIPO_VALOR NOT NULL,
-    status_contrato VARCHAR(15) NOT NULL, -- "ATIVO" ou "ENCERRADO"
+    status_contrato VARCHAR(15) NOT NULL CHECK (
+        status_contrato IN ('ATIVO', 'ENCERRADO')
+    ), -- "ATIVO" ou "ENCERRADO"
     dia_vencimento INT NOT NULL,
     data_inicio DATE NOT NULL,
     valor_aluguel TIPO_VALOR NOT NULL,
@@ -142,6 +148,11 @@ CREATE TABLE Contrato_Locacao (
     data_recisao DATE,
     multa TIPO_VALOR,
     motivo VARCHAR(50),
+    CHECK (
+        (status_contrato='ENCERRADO' AND data_recisao IS NOT NULL AND multa IS NOT NULL AND motivo IS NOT NULL)
+        OR
+        (status_contrato='ATIVO' AND data_recisao IS NULL AND multa IS NULL AND motivo IS NULL)
+    ),
     -------------------------
     id_imovel INT NOT NULL,
     id_cliente INT NOT NULL,
