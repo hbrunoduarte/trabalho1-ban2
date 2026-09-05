@@ -1,0 +1,312 @@
+@import url('https://googleapis.com');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat+Alternates:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+:root {
+	--cor-logo: #2B400C;
+	--cor-texto: #0B0D07;
+	--cor-alt1: #42590E;
+	--cor-alt2: #F2F2F2;
+	--cor-alt3: #593B16;
+	--fonte-titulo: "Montserrat Alternates", sans-serif;
+	--fonte-texto: "Roboto", sans-serif;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.icones {
+	font-size: 40px;
+}
+
+.titulo {
+	font-family: var(--fonte-titulo);
+}
+
+/* BarraSuperior.js */
+
+#barra-superior-principal {
+
+	background-color: white;
+
+	border-top: 2px solid var(--cor-logo);
+	border-bottom: 1px solid rgba(0,0,0, 0.1);
+	
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0 2%;
+}
+
+.botao-barra-principal {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+
+	color: var(--cor-logo);
+	font-family: var(--fonte-titulo);
+	font-weight: 400;
+	font-style: normal;
+
+	border: none;
+	background-color: white;
+}
+
+.texto-logo {
+	font-size: medium;
+}
+
+.texto-botao-barra-login {
+	color: var(--cor-logo);
+	font-size: 14px;
+	font-weight: 600;
+}
+
+.ph-user-circle {
+	color: var(--cor-logo);
+}
+
+.botao-area-login {
+	padding: 5px;
+	text-decoration: none;
+}
+
+.botao-area-login:hover {
+	background-color: var(--cor-logo);
+	transition: color 1s ease;
+}
+
+.botao-area-login:hover .ph-user-circle{
+	color: var(--cor-alt2);
+	transition: color 0.4s ease;
+}
+
+.botao-area-login:hover span {
+	color: var(--cor-alt2);
+	transition: color 0.4s ease;
+}
+
+/* BarraSuperior.js */
+
+/* BarraInferior.js */
+
+#barra-inferior-principal {
+	padding: 1em;
+
+	background-color: var(--cor-logo);
+	color: var(--cor-alt2);
+	text-align: center;
+
+	font-family: var(--fonte-texto);
+	font-optical-sizing: auto;
+	font-weight: 100;
+	font-style: normal;
+}
+
+/* BarraInferior.js */
+
+/* Área de Boas Vindas */
+
+#app-boasvindas {
+    display: flex;
+    flex-direction: column;
+	justify-content: space-between;
+    min-height: 100vh;
+}
+
+.boas-vindas {
+
+	background-color: #F2F2F2;
+
+    position: relative;
+    display: flex;
+	flex-direction: row-reverse;
+	justify-content: flex-end;
+    align-items: center;
+    
+    min-height: 70vh; 
+    
+	overflow: hidden;
+    padding-left: 8%; /* Empurra o texto um pouco para a direita, dando um respiro */
+	padding-top: 5%;
+}
+
+.container-texto-boasvindas  {
+	width: 40vw;
+}
+
+.texto-boasvindas {
+
+	z-index: 2; /* Garante que o texto fique por cima se a tela encolher */
+
+	color: var(--cor-texto);
+	font-family: var(--fonte-titulo);
+	font-weight: 600;
+	font-style: normal;
+	text-align: right;
+}
+
+.texto-boasvindas-principal {
+	font-weight: 800;
+}
+
+.boas-vindas-img {
+
+    position: absolute;
+    right: -15%;
+    
+    width: 60%;
+    height: 80%;
+    object-fit: cover;
+    
+    border-top-left-radius: 40px; 
+    border-bottom-left-radius: 40px;
+}
+
+/* Área de Boas Vindas */
+
+/* Área de Login */
+
+#app-login {
+	display: flex;
+    flex-direction: column;
+	justify-content: space-between;
+	min-height: 100vh;
+}
+
+.area-login {
+	flex-grow: 1;
+	padding: 2em;
+
+	background-color: var(--cor-alt2);
+
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: space-evenly;
+}
+
+.container-login-cadastro {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
+.caixa-login {
+
+	padding: 3em;
+
+	border: 1px solid gray;
+
+	background-color: lightgray;
+
+	display: flex;
+	flex-direction: column;
+
+	gap: 50px; /* Cria um espaço perfeito de 25px entre cada bloco (botões e inputs) */
+    
+    width: 100%;
+    max-width: 400px;
+
+}
+
+.login-botoes {
+	display: flex;
+	justify-content: space-evenly;
+	align-items: center;
+}
+
+.login-tipo-botao {
+
+	border: 0px;
+	padding: 1em;
+
+	background-color: var(--cor-alt2);
+
+	text-align: center;
+	font-family: var(--fonte-titulo);
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.login-tipo-botao-ativo {
+	background-color: var(--cor-logo);
+	color: var(--cor-alt2);
+}
+
+.login-input {
+	display: flex;
+	flex-direction: column;
+	gap: 25px;
+}
+
+.login-input-box {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5em;
+}
+
+.login-input-box label {
+	font-family: var(--fonte-titulo);
+	font-weight: 600;
+}
+
+.login-input-box input {
+	font-family: var(--fonte-texto);
+	font-weight: 400;
+	padding: 10px;
+	border: 1px solid var(--cor-logo);
+}
+
+.login-input-invalido::placeholder {
+	color: red;
+	font-weight: 500;
+}
+
+.submit-login {
+
+	padding: 0.7em;
+	border: 0px;
+	
+	display: flex;
+	align-items: center;
+	gap: 15px;
+
+	background-color: var(--cor-logo);
+
+	cursor: pointer;
+}
+
+.submit-login span {
+	font-family: var(--fonte-titulo);
+	font-weight: 600;
+	color: var(--cor-alt2);
+}
+
+.submit-login:hover {
+	background-color: var(--cor-alt1);
+	transition: color 0.7s ease;
+}
+
+.icone-login {
+	height: 1.3em;
+	width: 1.3em;
+	fill: var(--cor-alt2);
+}
+
+.login-texto-cadastro {
+	font-family: var(--fonte-texto);
+	font-weight: 400;
+	color: var(--cor-texto);
+}
+
+.login-link-cadastro {
+	text-decoration: none;
+	color: var(--cor-logo);
+	font-weight: 500;
+}
+
+/* Área de Login */
