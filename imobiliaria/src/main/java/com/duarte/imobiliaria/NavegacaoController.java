@@ -7,9 +7,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class NavegacaoController {
 
     // Essa linha "escuta" o href="/preLogin" que veio do link
-    @GetMapping("/preLogin")
-    public String abrirPaginaPreLogin() {
-        return "preLogin"; 
+    @GetMapping("/")
+    public String abrirPaginaBoasVindas() {
+        return "boasvindas";
     }
 
     @GetMapping("/login")
