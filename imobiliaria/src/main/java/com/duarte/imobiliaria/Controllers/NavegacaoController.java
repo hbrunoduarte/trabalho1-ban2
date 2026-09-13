@@ -1,4 +1,4 @@
-package com.duarte.imobiliaria;
+package com.duarte.imobiliaria.Controllers;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
