@@ -15,6 +15,7 @@
 body {
     margin: 0;
     padding: 0;
+	min-height: 100vh;
 }
 
 .icones {
@@ -261,9 +262,13 @@ body {
 	border: 1px solid var(--cor-logo);
 }
 
-.login-input-invalido::placeholder {
-	color: red;
+.login-input-invalido {
+	color: darkred;
 	font-weight: 500;
+	font-family: var(--fonte-texto);
+	font-size: smaller;
+	border: 0px;
+	margin: 0px;
 }
 
 .submit-login {
@@ -310,3 +315,131 @@ body {
 }
 
 /* Área de Login */
+
+/* Área de Cadastro */
+
+#app-cadastro {
+	min-height: 100vh;
+	background-color: var(--cor-alt2);
+}
+
+.area-cadastro {
+	padding: 4em 20em 4em 10em;
+}
+
+.cadastro-input {
+	display: flex;
+	flex-direction: column;
+	gap: 2em;
+}
+
+.cadastro-label {
+	font-family: var(--fonte-titulo);
+	font-weight: 600;
+}
+
+.cadastro-opcoes {
+	font-family: var(--fonte-texto);
+	font-weight: 400;
+}
+
+.cadastro-input {
+	display: flex;
+	flex-direction: column;
+	gap: 2em;
+}
+
+.cadastro-tipo {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1em;
+}
+
+.seletor-tipocadastro {
+	padding-left: 1em;
+}
+
+.cadastro-box-dados-bancarios {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5em;
+}
+
+.cadastro-bancario {
+	display: flex;
+}
+
+.cadastro-dados-bancarios {
+	display: flex;
+	flex-direction: column;
+	padding-left: 1em;
+	gap: 2em;
+}
+
+.cadastro-db-agencia-conta {
+	display: flex;
+	align-items: center;
+	gap: 5em;
+}
+
+.cadastro-db-dv-tipoconta {
+	display: flex;
+	align-items: center;
+	gap: 5em;
+}
+
+.cadastro-tipoconta {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+
+.box-seletor-banco {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5em;
+	padding-left: 2em;
+}
+
+.seletor-banco {
+	display: flex;
+	flex-wrap: wrap;
+}
+
+.seletor-banco input[type="radio"] {
+    display: none;
+}
+
+.seletor-banco img {
+	margin: 1px;
+	padding: 0.3em;
+	border: 1px solid lightgray;
+	height: 50px;
+	width: 50px;
+	background-color: white;
+}
+
+img.seletor-banco-escolhido {
+	border: 2px solid var(--cor-alt1);
+}
+
+.box-cadastro-endereco {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5em;
+}
+
+.cadastro-endereco {
+	display: flex;
+	flex-direction: column;
+	padding-left: 1em;
+	gap: 2em;
+}
+
+.cadastro-endereco-dados {
+	display: flex;
+	align-items: center;
+	gap: 1.3em;
+}
+
+/* Área de Cadastro */
