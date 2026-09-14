@@ -2,10 +2,10 @@ export default {
     template: `
     <div id="barra-superior-principal">
         
-        <button class="botao-barra-principal texto-logo">
+        <a class="botao-barra-principal texto-logo" href="/" >
             <i class="ph-fill ph-house-line icones"></i>
             <h1>Imobiliária</h1>
-        </button>
+        </a>
         
         <a href="/login" class="botao-barra-principal botao-area-login">
             <i class="ph ph-user-circle icones"></i>

@@ -38,10 +38,15 @@ body {
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	padding: 0 2%;
+
+	padding-right: 2%;
 }
 
 .botao-barra-principal {
+
+	padding-left: 2%;
+	padding-right: 1%;
+
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -56,8 +61,15 @@ body {
 	background-color: white;
 }
 
+.botao-barra-principal:hover {
+	background-color: var(--cor-logo);
+	color: var(--cor-alt2);
+	transition: color 0.4s ease;
+}
+
 .texto-logo {
 	font-size: medium;
+	text-decoration: none;
 }
 
 .texto-botao-barra-login {
