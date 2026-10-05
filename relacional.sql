@@ -14,14 +14,6 @@ CREATE TABLE Endereco (
     PRIMARY KEY (id_endereco)
 );
 
-CREATE TABLE TelefoneProprietario (
-    id_telefone SERIAL NOT NULL,
-    telefone VARCHAR(13) NOT NULL,
-    id_proprietario INT NOT NULL,
-    PRIMARY KEY (id_telefone),
-    FOREIGN KEY (id_proprietario) REFERENCES Proprietario (id_proprietario)
-);
-
 CREATE TABLE Proprietario (
     id_proprietario SERIAL,
     tipo CHAR(1) NOT NULL, -- 'F' ou 'J'
@@ -33,12 +25,20 @@ CREATE TABLE Proprietario (
     razao_social VARCHAR(50),
     id_endereco INT NOT NULL,
     PRIMARY KEY (id_proprietario),
-    FOREIGN KEY (id_endereco) REFERENCES Endereco (id_endereco)
+    FOREIGN KEY (id_endereco) REFERENCES Endereco (id_endereco),
     CHECK (
         (tipo = 'F' AND cpf IS NOT NULL AND nome IS NOT NULL AND cnpj IS NULL)
         OR
         (tipo = 'J' AND cnpj IS NOT NULL AND razao_social IS NOT NULL AND cpf IS NULL)
     )
+);
+
+CREATE TABLE TelefoneProprietario (
+    id_telefone SERIAL NOT NULL,
+    telefone VARCHAR(13) NOT NULL,
+    id_proprietario INT NOT NULL,
+    PRIMARY KEY (id_telefone),
+    FOREIGN KEY (id_proprietario) REFERENCES Proprietario (id_proprietario)
 );
 
 CREATE TABLE Imovel (
@@ -54,8 +54,9 @@ CREATE TABLE Imovel (
     descricao VARCHAR(150) NOT NULL,
     valor TIPO_VALOR NOT NULL,
     status VARCHAR(30) NOT NULL CHECK (
-        status IN ('disponível para venda', 'disponível para locação', 'vendido', 'alugado', 'indisponível')
-    ), -- disponível para venda, disponível para locação, vendido, alugado ou indisponível
+        status IN ('disponível para venda', 'disponível para locação',
+                   'vendido', 'alugado', 'indisponível')
+    ),
     PRIMARY KEY (id_imovel),
     FOREIGN KEY (id_endereco) REFERENCES Endereco (id_endereco),
     FOREIGN KEY (id_proprietario) REFERENCES Proprietario (id_proprietario)
@@ -117,7 +118,7 @@ CREATE TABLE Contrato_Venda (
     id_venda SERIAL,
     data DATE NOT NULL,
     valor_venda TIPO_VALOR NOT NULL,
-    valor_sinal TIPO_VALOR NOT NULL,
+    valor_sinal TIPO_VALOR,
     forma_pagamento VARCHAR(20) NOT NULL,
     valor_financiado TIPO_VALOR,
     valor_comissao TIPO_VALOR NOT NULL,
@@ -149,9 +150,17 @@ CREATE TABLE Contrato_Locacao (
     multa TIPO_VALOR,
     motivo VARCHAR(50),
     CHECK (
-        (status_contrato='ENCERRADO' AND data_recisao IS NOT NULL AND multa IS NOT NULL AND motivo IS NOT NULL)
+        (status_contrato = 'ENCERRADO' AND data_recisao IS NOT NULL AND multa IS NOT NULL AND motivo IS NOT NULL)
         OR
-        (status_contrato='ATIVO' AND data_recisao IS NULL AND multa IS NULL AND motivo IS NULL)
+        (status_contrato = 'ATIVO' AND data_recisao IS NULL AND multa IS NULL AND motivo IS NULL)
+    ),
+    CHECK (
+        (garantia = 'DEPOSITO CAUCAO' AND valor_caucao IS NOT NULL)
+        OR
+        (garantia IS DISTINCT FROM 'DEPOSITO CAUCAO' AND valor_caucao IS NULL)
+    ),
+    CHECK (
+        dia_vencimento BETWEEN 1 AND 31
     ),
     -------------------------
     id_imovel INT NOT NULL,
