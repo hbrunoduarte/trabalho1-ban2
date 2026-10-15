@@ -64,6 +64,7 @@ CREATE TABLE Imovel (
 
 CREATE TABLE Foto (
     id_foto SERIAL,
+    imagem BYTEA,
     tipo VARCHAR(20) NOT NULL,
     id_imovel INT,
     PRIMARY KEY (id_foto),
