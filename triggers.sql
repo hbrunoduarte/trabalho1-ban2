@@ -56,13 +56,31 @@ CREATE OR REPLACE FUNCTION fn_valida_fiador() RETURNS TRIGGER AS
 $$
 DECLARE
 	v_garantia VARCHAR(30);
+	v_status VARCHAR(15);
+	v_cpf_locatario TIPO_CPF;
+	v_cpf_fiador TIPO_CPF;
 BEGIN
-	SELECT garantia INTO v_garantia
-	FROM Contrato_Locacao
-	WHERE id_locacao = NEW.id_locacao;
+	SELECT c.garantia, c.status_contrato, cl.cpf
+	INTO v_garantia, v_status, v_cpf_locatario
+	FROM Contrato_Locacao c
+	JOIN Cliente cl ON cl.id_cliente = c.id_cliente
+	WHERE c.id_locacao = NEW.id_locacao;
+
+	SELECT cpf INTO v_cpf_fiador
+	FROM Fiador
+	WHERE id_fiador = NEW.id_fiador;
 
 	IF v_garantia IS DISTINCT FROM 'FIADOR' THEN
 		RAISE EXCEPTION 'Contrato % não tem garantia do tipo FIADOR', NEW.id_locacao;
+	END IF;
+
+	IF (TG_OP = 'INSERT' OR NEW.id_locacao IS DISTINCT FROM OLD.id_locacao)
+	   AND v_status IS DISTINCT FROM 'ATIVO' THEN
+		RAISE EXCEPTION 'Contrato % não está ativo (status: %)', NEW.id_locacao, v_status;
+	END IF;
+	
+	IF v_cpf_fiador = v_cpf_locatario THEN
+		RAISE EXCEPTION 'O fiador não pode ser locatário do contrato';
 	END IF;
 
 	RETURN NEW;
@@ -71,7 +89,7 @@ $$
 LANGUAGE plpgsql;
 
 CREATE TRIGGER tgr_valida_fiador
-BEFORE INSERT OR UPDATE ON Fiador
+BEFORE INSERT OR UPDATE ON Fiador_Contrato
 FOR EACH ROW EXECUTE FUNCTION fn_valida_fiador();
 
 -------------------------------------------------------------------------------------------
@@ -179,7 +197,7 @@ CREATE OR REPLACE FUNCTION fn_garantia_com_fiador() RETURNS TRIGGER AS
 $$
 BEGIN
 	IF OLD.garantia = 'FIADOR' AND NEW.garantia IS DISTINCT FROM 'FIADOR'
-	AND EXISTS (SELECT 1 FROM Fiador WHERE id_locacao = NEW.id_locacao) THEN
+	AND EXISTS (SELECT 1 FROM Fiador_Contrato WHERE id_locacao = NEW.id_locacao) THEN
 		RAISE EXCEPTION 'Contrato % possui fiador cadastrado', NEW.id_locacao;
 	END IF;
 
