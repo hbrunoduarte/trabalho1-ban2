@@ -193,7 +193,7 @@ CREATE TABLE Contrato_Locacao (
         status_contrato IN ('ATIVO', 'ENCERRADO')
     ), -- "ATIVO" ou "ENCERRADO"
     dia_vencimento INT NOT NULL,
-    data_inicio DATE NOT NULL,
+    data_inicio DATE NOT NULL DEFAULT (date_trunc('month', CURRENT_DATE) + INTERVAL '1 month')::DATE,
     valor_aluguel TIPO_VALOR NOT NULL,
     -- No caso de "ENCERRADO"
     data_rescisao DATE,
