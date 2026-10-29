@@ -1,7 +1,30 @@
 CREATE DOMAIN TIPO_VALOR AS NUMERIC(15,2);
 CREATE DOMAIN TIPO_CPF AS CHAR(11);
 CREATE DOMAIN TIPO_CNPJ AS CHAR(14);
+CREATE DOMAIN TIPO_SENHA AS VARCHAR(72);
 
+CREATE TABLE TipoImovel (
+    id_tipo_imovel SERIAL,
+    descricao VARCHAR(20),
+    PRIMARY KEY (id_tipo_imovel)
+);
+
+INSERT INTO TipoImovel(descricao) VALUES 
+    ('Casa'),
+    ('Casa Geminada'),
+    ('Edícula'),
+    ('Bangalô'),
+    ('Apartamento Padrão'),
+    ('Cobertura'),
+    ('Studio'),
+    ('Loft'),
+    ('Giardino'),
+    ('Sala Comercial'),
+    ('Andar Corrido'),
+    ('Galpão'),
+    ('Chácara'),
+    ('Terreno');
+    
 CREATE TABLE Endereco (
     id_endereco SERIAL,
     cep CHAR(8) NOT NULL,
@@ -10,7 +33,7 @@ CREATE TABLE Endereco (
     bairro VARCHAR(30) NOT NULL,
     numero INT NOT NULL,
     rua VARCHAR(50) NOT NULL,
-    complemento VARCHAR(10),
+    complemento VARCHAR(30),
     PRIMARY KEY (id_endereco)
 );
 
@@ -19,7 +42,8 @@ CREATE TABLE Proprietario (
     tipo CHAR(1) NOT NULL, -- 'F' ou 'J'
     cpf TIPO_CPF UNIQUE,
     cnpj TIPO_CNPJ UNIQUE,
-    email VARCHAR(50),
+    email VARCHAR(50) UNIQUE NOT NULL,
+    senha TIPO_SENHA NOT NULL,
     dados_bancario VARCHAR(50) NOT NULL,
     nome VARCHAR(50),
     razao_social VARCHAR(50),
@@ -38,12 +62,13 @@ CREATE TABLE TelefoneProprietario (
     telefone VARCHAR(13) NOT NULL,
     id_proprietario INT NOT NULL,
     PRIMARY KEY (id_telefone),
-    FOREIGN KEY (id_proprietario) REFERENCES Proprietario (id_proprietario)
+    FOREIGN KEY (id_proprietario) REFERENCES Proprietario (id_proprietario),
+    UNIQUE (telefone, id_proprietario)
 );
 
 CREATE TABLE Imovel (
     id_imovel SERIAL,
-    tipo VARCHAR(20) NOT NULL,
+    id_tipo_imovel INT NOT NULL,
     id_endereco INT NOT NULL,
     id_proprietario INT NOT NULL,
     area_total FLOAT NOT NULL,
@@ -58,13 +83,14 @@ CREATE TABLE Imovel (
                    'vendido', 'alugado', 'indisponível')
     ),
     PRIMARY KEY (id_imovel),
+    FOREIGN KEY (id_tipo_imovel) REFERENCES TipoImovel (id_tipo_imovel),
     FOREIGN KEY (id_endereco) REFERENCES Endereco (id_endereco),
     FOREIGN KEY (id_proprietario) REFERENCES Proprietario (id_proprietario)
 );
 
 CREATE TABLE Foto (
     id_foto SERIAL,
-    imagem BYTEA,
+    imagem BYTEA NOT NULL,
     tipo VARCHAR(20) NOT NULL,
     id_imovel INT NOT NULL,
     PRIMARY KEY (id_foto),
@@ -77,38 +103,40 @@ CREATE TABLE Publicacao (
     id_imovel INT NOT NULL,
     id_foto_capa INT,
     titulo VARCHAR(50) NOT NULL,
+    tipo_publicacao CHAR(1) NOT NULL, -- 'V'enda ou 'L'ocacao
     ativa BOOLEAN NOT NULL,
     data DATE NOT NULL DEFAULT CURRENT_DATE,
     acessos INT NOT NULL DEFAULT 0 CHECK (acessos >= 0),
     PRIMARY KEY (id_publicacao),
     FOREIGN KEY (id_imovel) REFERENCES Imovel (id_imovel),
     -- Para garantir que a foto de capa é do imóvel
-    FOREIGN KEY (id_foto_capa, id_imovel) REFERENCES Foto (id_foto, id_imovel),
-    -- Para cada imovel ter só uma publicação
-    UNIQUE (id_imovel)
+    FOREIGN KEY (id_foto_capa, id_imovel) REFERENCES Foto (id_foto, id_imovel)
 );
 
 CREATE TABLE Corretor (
     id_corretor SERIAL,
     nome VARCHAR(50) NOT NULL,
-    email VARCHAR(50) NOT NULL,
+    email VARCHAR(50) UNIQUE NOT NULL,
+    senha TIPO_SENHA NOT NULL,
     telefone VARCHAR(13) NOT NULL,
     cpf TIPO_CPF UNIQUE NOT NULL,
-    percentual_comissao INT NOT NULL,
+    percentual_comissao FLOAT NOT NULL,
     data_admissao DATE NOT NULL,
-    creci VARCHAR(10) NOT NULL,
+    creci VARCHAR(12) NOT NULL,
     PRIMARY KEY (id_corretor)
 );
 
 CREATE TABLE Cliente (
     id_cliente SERIAL,
-    renda_mensal INT NOT NULL,
+    renda_mensal FLOAT NOT NULL,
     profissao VARCHAR(30) NOT NULL,
-    tipo_interessado VARCHAR(50) NOT NULL,
+    id_tipo_imovel INT NOT NULL,
     cpf TIPO_CPF UNIQUE NOT NULL,
-    email VARCHAR(50) NOT NULL,
+    email VARCHAR(50) UNIQUE NOT NULL,
+    senha VARCHAR(50) NOT NULL,
     nome VARCHAR(50),
-    PRIMARY KEY (id_cliente)
+    PRIMARY KEY (id_cliente),
+    FOREIGN KEY (id_tipo_imovel) REFERENCES TipoImovel (id_tipo_imovel)
 );
 
 CREATE TABLE TelefoneCliente (
@@ -116,7 +144,8 @@ CREATE TABLE TelefoneCliente (
     telefone VARCHAR(13) NOT NULL,
     id_cliente INT NOT NULL,
     PRIMARY KEY (id_telefone),
-    FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente)
+    FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente),
+    UNIQUE(telefone, id_cliente)
 );
 
 CREATE TABLE Visita_Agendada (
@@ -126,6 +155,7 @@ CREATE TABLE Visita_Agendada (
     id_corretor INT NOT NULL,
     id_cliente INT NOT NULL,
     id_imovel INT NOT NULL,
+    potencial_contrato BOOLEAN NOT NULL DEFAULT,
     PRIMARY KEY (id_visita),
     FOREIGN KEY (id_corretor) REFERENCES Corretor (id_corretor),
     FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente),
@@ -142,11 +172,13 @@ CREATE TABLE Contrato_Venda (
     valor_comissao TIPO_VALOR NOT NULL,
     id_cliente INT NOT NULL,
     id_proprietario INT NOT NULL,
-    id_imovel INT NOT NULL, 
+    id_imovel INT NOT NULL,
+    id_corretor INT NOT NULL,
     PRIMARY KEY (id_venda),
     FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente),
     FOREIGN KEY (id_proprietario) REFERENCES Proprietario (id_proprietario),
-    FOREIGN KEY (id_imovel) REFERENCES Imovel (id_imovel)
+    FOREIGN KEY (id_imovel) REFERENCES Imovel (id_imovel),
+    FOREIGN KEY (id_corretor) REFERENCES Correotr (id_corretor)
 );
 
 CREATE TABLE Contrato_Locacao (
@@ -190,9 +222,11 @@ CREATE TABLE Contrato_Locacao (
     -------------------------
     id_imovel INT NOT NULL,
     id_cliente INT NOT NULL,
+    id_corretor INT NOT NULL,
     PRIMARY KEY (id_locacao),
     FOREIGN KEY (id_imovel) REFERENCES Imovel (id_imovel),
-    FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente)
+    FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente),
+    FOREIGN KEY (id_corretor) REFERENCES Corretor (id_corretor)
 );
 
 CREATE TABLE Fiador (
@@ -200,6 +234,7 @@ CREATE TABLE Fiador (
     cpf TIPO_CPF NOT NULL UNIQUE,
     nome VARCHAR(50) NOT NULL,
     id_endereco INT NOT NULL,
+    comprovante_renda BYTEA NOT NULL,
     PRIMARY KEY (id_fiador),
     FOREIGN KEY (id_endereco) REFERENCES Endereco (id_endereco)
 );
@@ -209,13 +244,13 @@ CREATE TABLE TelefoneFiador (
     telefone VARCHAR(13) NOT NULL,
     id_fiador INT NOT NULL,
     PRIMARY KEY (id_telefone),
-    FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador)
+    FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador),
+    UNIQUE (telefone, id_fiador)
 );
 
 CREATE TABLE Fiador_Contrato (
     id_locacao INT NOT NULL,
     id_fiador INT NOT NULL,
-    comprovante_renda VARCHAR(50) NOT NULL,
     PRIMARY KEY (id_locacao, id_fiador),
     FOREIGN KEY (id_locacao) REFERENCES Contrato_Locacao (id_locacao),
     FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador)
@@ -281,5 +316,69 @@ TRIGGERS:
 - Para ser fiador, o contrato precisar estar ativo
 
 - O CPF do locatário e fiador devem ser diferentes
+
+*/
+
+/*
+
+-- 1. Inserir Endereços (Serão usados pelos proprietários e pelos imóveis)
+INSERT INTO Endereco (cep, estado, cidade, bairro, numero, rua, complemento) VALUES
+('89201000', 'Santa Catarina', 'Joinville', 'Centro', 100, 'Rua Nove de Março', 'Apto 101'),
+('89202000', 'Santa Catarina', 'Joinville', 'Anita Garibaldi', 200, 'Rua Anita Garibaldi', NULL),
+('89203000', 'Santa Catarina', 'Joinville', 'Costa e Silva', 300, 'Rua Otto Pfuetzenreuter', NULL),
+('89204000', 'Santa Catarina', 'Joinville', 'América', 400, 'Rua João Colin', 'Sala 10'),
+('89205000', 'Santa Catarina', 'Joinville', 'Saguaçu', 500, 'Rua Dona Francisca', 'Casa'),
+('89206000', 'Santa Catarina', 'Joinville', 'Bom Retiro', 600, 'Rua Tenente Antônio João', NULL),
+('89207000', 'Santa Catarina', 'Joinville', 'Santo Antônio', 700, 'Rua Prudente de Moraes', 'Cobertura');
+
+SELECT * FROM ENDERECO;
+
+-- 2. Inserir Proprietários (Um Pessoa Física e um Pessoa Jurídica)
+-- Utilizam os endereços de ID 1 e 2
+INSERT INTO Proprietario (tipo, cpf, cnpj, email, senha, dados_bancario, nome, razao_social, id_endereco) VALUES
+('F', '81404462899', NULL, 'joao.silva@email.com', 'Abacate&2026', 'Banco do Brasil Ag 1234 CC 5678-9', 'João da Silva', NULL, 15),
+('J', NULL, '85947080000140', 'contato@imobiliaria.com', 'Alface&2026', 'Itaú Ag 4321 CC 9876-5', NULL, 'Imobiliária S/A', 16);
+
+INSERT INTO TelefoneProprietario(id_proprietario, telefone) VALUES
+	(11, '9724678832'),
+	(12, '2737559484'),
+	(12, '7927144866');
+
+
+-- 3. Inserir Imóveis
+-- Utilizam os IDs de Endereço de 3 a 7, IDs de Proprietários 1 e 2, e os IDs de TipoImovel (1=Casa, 5=Apto, 10=Sala, 2=Geminada, 6=Cobertura)
+INSERT INTO Imovel (id_tipo_imovel, id_endereco, id_proprietario, area_total, qtd_dormitorios, qtd_banheiros, qtd_vagas, ano_construcao, descricao, valor, status) VALUES
+(1, 17, 11, 150.00, 3, 2, 2, 2015, 'Linda casa espaçosa no Costa e Silva.', 450000.00, 'disponível para venda'),
+(5, 18, 11, 80.00, 2, 1, 1, 2020, 'Apartamento padrão bem localizado no América.', 2500.00, 'disponível para locação'),
+(10, 19, 12, 45.00, 0, 1, 1, 2018, 'Sala comercial em prédio moderno.', 150000.00, 'disponível para venda'),
+(2, 20, 12, 120.00, 3, 2, 2, 2023, 'Casa geminada recém construída, ótimo acabamento.', 350000.00, 'disponível para venda'),
+(6, 21, 11, 200.00, 4, 3, 3, 2010, 'Cobertura com vista incrível para a cidade.', 850000.00, 'disponível para venda');
+
+SELECT * FROM Imovel;
+
+-- 4. Inserir Fotos (Capa para cada imóvel)
+-- Utilizamos uma string hexadecimal fictícia (E'\\x...') para popular o campo BYTEA
+INSERT INTO Foto (imagem, tipo, id_imovel) VALUES
+(pg_read_binary_file('C:/imagensBanco/casa.jpg'), 'Fachada', 21),
+(pg_read_binary_file('C:/imagensBanco/apartamento.jpg'), 'Sala', 22),
+(pg_read_binary_file('C:/imagensBanco/salacomercial.jpg'), 'Recepção', 23),
+(pg_read_binary_file('C:/imagensBanco/geminado.jpg'), 'Frente', 24),
+(pg_read_binary_file('C:/imagensBanco/cobertura.jpg'), 'Terraço', 25),
+(pg_read_binary_file('C:/imagensBanco/casa_cozinha.jpg'), 'Cozinha', 21),
+(pg_read_binary_file('C:/imagensBanco/casa_quarto.jpg'), 'Quarto de Casal', 21),
+(pg_read_binary_file('C:/imagensBanco/casa_banheiro.jpg'), 'Banheiro', 21);
+
+SELECT * FROM FOTO;
+
+-- 5. Inserir Publicações
+-- A chave estrangeira composta de id_foto_capa exige que a foto pertença exatamente ao imóvel indicado
+INSERT INTO Publicacao (id_imovel, id_foto_capa, titulo, tipo_publicacao, ativa, data, acessos) VALUES
+(21, 1, 'Casa aconchegante no Costa e Silva', 'V', TRUE, '2023-10-01', 125),
+(22, 2, 'Lindo Apartamento no América', 'L', TRUE, '2023-10-05', 45),
+(23, 3, 'Oportunidade Comercial no Saguaçu', 'V', TRUE, '2023-10-10', 300),
+(24, 4, 'Geminado novo no Bom Retiro', 'V', TRUE, '2023-10-15', 78),
+(25, 5, 'Cobertura Espetacular no Santo Antônio', 'V', TRUE, '2023-09-20', 540);
+
+SELECT * FROM PUBLICACAO;
 
 */
