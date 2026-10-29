@@ -164,7 +164,7 @@ CREATE TABLE Visita_Agendada (
 
 CREATE TABLE Contrato_Venda (
     id_venda SERIAL,
-    data DATE NOT NULL,
+    data DATE NOT NULL DEFAULT CURRENT_DATE,
     valor_venda TIPO_VALOR NOT NULL,
     valor_sinal TIPO_VALOR,
     forma_pagamento VARCHAR(20) NOT NULL,
@@ -223,10 +223,12 @@ CREATE TABLE Contrato_Locacao (
     id_imovel INT NOT NULL,
     id_cliente INT NOT NULL,
     id_corretor INT NOT NULL,
+    id_fiador INT,
     PRIMARY KEY (id_locacao),
     FOREIGN KEY (id_imovel) REFERENCES Imovel (id_imovel),
     FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente),
     FOREIGN KEY (id_corretor) REFERENCES Corretor (id_corretor)
+    FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador)
 );
 
 CREATE TABLE Fiador (
@@ -246,14 +248,6 @@ CREATE TABLE TelefoneFiador (
     PRIMARY KEY (id_telefone),
     FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador),
     UNIQUE (telefone, id_fiador)
-);
-
-CREATE TABLE Fiador_Contrato (
-    id_locacao INT NOT NULL,
-    id_fiador INT NOT NULL,
-    PRIMARY KEY (id_locacao, id_fiador),
-    FOREIGN KEY (id_locacao) REFERENCES Contrato_Locacao (id_locacao),
-    FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador)
 );
 
 CREATE TABLE Reajuste_Aluguel (
