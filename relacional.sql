@@ -189,7 +189,7 @@ CREATE TABLE Contrato_Locacao (
     ), -- "FIADOR", "SEGURO FIANCA" ou "DEPOSITO CAUCAO"
     valor_caucao TIPO_VALOR,
     valor_comissao TIPO_VALOR NOT NULL,
-    status_contrato VARCHAR(15) NOT NULL CHECK (
+    status_contrato VARCHAR(15) NOT NULL DEFAULT 'ATIVO' CHECK (
         status_contrato IN ('ATIVO', 'ENCERRADO')
     ), -- "ATIVO" ou "ENCERRADO"
     dia_vencimento INT NOT NULL,
