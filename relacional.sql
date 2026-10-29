@@ -178,7 +178,7 @@ CREATE TABLE Contrato_Venda (
     FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente),
     FOREIGN KEY (id_proprietario) REFERENCES Proprietario (id_proprietario),
     FOREIGN KEY (id_imovel) REFERENCES Imovel (id_imovel),
-    FOREIGN KEY (id_corretor) REFERENCES Correotr (id_corretor)
+    FOREIGN KEY (id_corretor) REFERENCES Corretor (id_corretor)
 );
 
 CREATE TABLE Contrato_Locacao (
@@ -214,7 +214,7 @@ CREATE TABLE Contrato_Locacao (
         dia_vencimento BETWEEN 1 AND 28
     ),
     CHECK (
-        data_recisao IS NULL OR data_rescisao >= data_inicio
+        data_rescisao IS NULL OR data_rescisao >= data_inicio
     ),
     CHECK (
         prazo_em_meses > 0
@@ -227,7 +227,7 @@ CREATE TABLE Contrato_Locacao (
     PRIMARY KEY (id_locacao),
     FOREIGN KEY (id_imovel) REFERENCES Imovel (id_imovel),
     FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente),
-    FOREIGN KEY (id_corretor) REFERENCES Corretor (id_corretor)
+    FOREIGN KEY (id_corretor) REFERENCES Corretor (id_corretor),
     FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador)
 );
 
