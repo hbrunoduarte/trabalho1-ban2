@@ -209,3 +209,27 @@ LANGUAGE plpgsql;
 CREATE TRIGGER tgr_garantia_com_fiador
 BEFORE UPDATE OF garantia ON Contrato_Locacao
 FOR EACH ROW EXECUTE FUNCTION fn_garantia_com_fiador();
+
+-------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION fn_contrato_fechado() RETURNS TRIGGER AS
+$$
+BEGIN
+	UPDATE Publicacao p
+	SET ativa = FALSE
+	WHERE p.id_imovel = NEW.id_imovel;
+
+	UPDATE Visita_Agendada v
+	SET potencial_contrato = FALSE
+	WHERE v.id_imovel = NEW.id_imovel;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER tgr_contrato_locacao_fechado
+AFTER INSERT ON Contrato_Locacao
+FOR EACH ROW EXECUTE FUNCTION fn_contrato_fechado();
+
+CREATE TRIGGER tgr_contrato_venda_fechado
+AFTER INSERT ON Contrato_Venda
+FOR EACH ROW EXECUTE FUNCTION fn_contrato_fechado();

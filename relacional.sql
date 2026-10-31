@@ -155,7 +155,7 @@ CREATE TABLE Visita_Agendada (
     id_corretor INT NOT NULL,
     id_cliente INT NOT NULL,
     id_imovel INT NOT NULL,
-    potencial_contrato BOOLEAN NOT NULL DEFAULT,
+    potencial_contrato BOOLEAN NOT NULL DEFAULT TRUE,
     PRIMARY KEY (id_visita),
     FOREIGN KEY (id_corretor) REFERENCES Corretor (id_corretor),
     FOREIGN KEY (id_cliente) REFERENCES Cliente (id_cliente),
@@ -277,41 +277,6 @@ CREATE TABLE Recibo_Aluguel (
     -- período
     UNIQUE (id_locacao, ano, mes)
 );
-
-/*
------- LOG DE MUDANCAS ------
-
-- CPFs e CNPJs marcados com UNIQUE
-
-- Na tabela Contrato_Locacao:
-
-    - prazo_mes -> prazo_em_meses 
-    - data_recisao -> data_rescisao
-    - dia_vencimento agora vai de 1 a 28
-    - adicionada verificacao para prazo_mes
-    - data_rescisao deve ser maior que data_inicio
-    - um contrato encerrado não necessariamente tem multa
-    - a multa deve sempre ser NULL ou maior ou igual que zero 
-
-- Na tabela Recibo_Aluguel:
-
-    - adicionado check do mês
-    - adicionado ano
-    - todo recibo tem uma combinacao unica de id_locacao, ano e mes
-
-- Tabela associativa Fiador_Contrato foi criada
-
-- Comprovante_renda e id_locacao foram para a tabela associativa
-
-- Adicionada tabela Publicacao
-
-TRIGGERS:
-
-- Para ser fiador, o contrato precisar estar ativo
-
-- O CPF do locatário e fiador devem ser diferentes
-
-*/
 
 /*
 
