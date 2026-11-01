@@ -104,7 +104,7 @@ CREATE TABLE Publicacao (
     id_foto_capa INT,
     titulo VARCHAR(50) NOT NULL,
     tipo_publicacao CHAR(1) NOT NULL, -- 'V'enda ou 'L'ocacao
-    ativa BOOLEAN NOT NULL,
+    ativa BOOLEAN NOT NULL DEFAULT TRUE,
     data DATE NOT NULL DEFAULT CURRENT_DATE,
     acessos INT NOT NULL DEFAULT 0 CHECK (acessos >= 0),
     PRIMARY KEY (id_publicacao),
