@@ -33,13 +33,16 @@ body {
 	background-color: white;
 
 	border-top: 2px solid var(--cor-logo);
-	border-bottom: 1px solid rgba(0,0,0, 0.1);
 	
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
 
 	padding-right: 2%;
+}
+
+#barra-superior-principal.barra-com-borda {
+	border-bottom: 1px solid rgba(0,0,0, 0.1);
 }
 
 .botao-barra-principal {
@@ -70,6 +73,13 @@ body {
 .texto-logo {
 	font-size: medium;
 	text-decoration: none;
+}
+
+.bprincipal-botoes-navegacao {
+	display: flex;
+	flex-direction: row;
+	justify-content: flex-end;
+	gap: 2em;
 }
 
 .texto-botao-barra-login {
@@ -314,6 +324,12 @@ body {
 	fill: var(--cor-alt2);
 }
 
+.box-redirect-cadastro {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}
+
 .login-texto-cadastro {
 	font-family: var(--fonte-texto);
 	font-weight: 400;
@@ -321,7 +337,6 @@ body {
 }
 
 .login-link-cadastro {
-	text-decoration: none;
 	color: var(--cor-logo);
 	font-weight: 500;
 }
@@ -335,8 +350,23 @@ body {
 	background-color: var(--cor-alt2);
 }
 
+.box-cadastro {
+	display: flex;
+	flex-direction: column;
+}
+
+.box-cadastro-titulo {
+	background-color: var(--cor-logo);
+}
+
+.cadastro-titulo {
+	font-family: var(--fonte-titulo);
+	color: var(--cor-alt2);
+	padding-left: 4em;
+}
+
 .area-cadastro {
-	padding: 4em 20em 4em 10em;
+	padding: 2em 20em 4em 10em;
 }
 
 .cadastro-input {
@@ -435,6 +465,80 @@ img.seletor-banco-escolhido {
 	border: 2px solid var(--cor-alt1);
 }
 
+.box-cadastro-telefones {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+	padding-left: 1em;
+}
+
+.cadastro-telefones {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5em;
+}
+
+.cadastro-telefones-dados {
+	display: flex;
+	align-items:end;
+	gap: 1.5em;
+}
+
+.remover-telefone {
+	height: 75%;
+	font-family: var(--fonte-titulo);
+	color: var(--cor-texto);
+	font-weight: 500;
+	cursor: pointer;
+	border: 1px solid lightgray;
+}
+
+.remover-telefone:hover {
+	color: var(--cor-alt2);
+	background-color: var(--cor-logo);
+	border: 1px solid lightgray;
+	transition: color 0.7s ease;
+}
+
+.add-telefone {
+	width: 20%;
+	padding: 0.5em 0 0.5em 0;
+	font-family: var(--fonte-titulo);
+	color: var(--cor-texto);
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid lightgray;
+}
+
+.add-telefone:hover {
+	color: var(--cor-alt2);
+	background-color: var(--cor-logo);
+	border: 1px solid lightgray;
+	transition: color 0.7s ease;
+}
+
+.box-cadastro-tipo-imoveis {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+}
+
+.cadastro-tipo-imoveis {
+
+	margin-left: 1em;
+	
+	display: flex;
+	flex-direction: column;
+	gap: 0.5em;
+}
+
+.opcao-tipo-imovel {
+	display: flex;
+	align-items: center;
+	align-content: center;
+	gap: 0.3em;
+}
+
 .box-cadastro-endereco {
 	display: flex;
 	flex-direction: column;
@@ -455,3 +559,1290 @@ img.seletor-banco-escolhido {
 }
 
 /* Área de Cadastro */
+
+/* Área de Pesquisa */
+
+#app-pesquisa {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--cor-alt2);
+}
+
+.area-pesquisa {
+	flex-grow: 1;
+	display: flex;
+	align-items: flex-start;
+	gap: 2em;
+	padding: 2em 4em 4em 4em;
+}
+
+.pesquisa-filtro {
+	width: 280px;
+	flex-shrink: 0;
+
+	padding: 1.5em;
+	border: 1px solid gray;
+	background-color: lightgray;
+
+	display: flex;
+	flex-direction: column;
+	gap: 1.5em;
+}
+
+.pesquisa-filtro .login-input-box input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.pesquisa-filtro-grupo {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8em;
+}
+
+.pesquisa-dica {
+	margin: 0;
+	font-family: var(--fonte-texto);
+	font-size: smaller;
+	color: #555;
+}
+
+.pesquisa-filtro-botoes {
+	display: flex;
+	align-items: stretch;
+	gap: 1em;
+}
+
+.slider-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5em;
+    margin-top: 0.5em;
+}
+
+.slider-preco {
+    -webkit-appearance: none;
+	font-family: var(--fonte-texto);
+    width: 100%;
+    height: 6px;
+    background: white;
+	border: 1px solid var(--cor-logo);
+    border-radius: 5px;
+    outline: none;
+    margin-bottom: 1em;
+}
+
+.slider-preco::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+	border: 1px solid var(--cor-logo);
+    border-radius: 50%;
+    background: var(--cor-logo);
+    cursor: pointer;
+}
+
+.slider-preco::-moz-range-thumb {
+	opacity: 100%;
+    width: 18px;
+    height: 18px;
+	border: 1px solid var(--cor-logo);
+    border-radius: 50%;
+    background: var(--cor-logo);
+    cursor: pointer;
+    border: none;
+}
+
+.icone-pesquisa {
+	color: var(--cor-alt2);
+	font-size: 1.3em;
+}
+
+.pesquisa-limpar {
+	padding: 0.7em 1em;
+	font-family: var(--fonte-titulo);
+	color: var(--cor-texto);
+	font-weight: 600;
+	cursor: pointer;
+	border: 1px solid gray;
+	background-color: var(--cor-alt2);
+}
+
+.pesquisa-limpar:hover {
+	color: var(--cor-alt2);
+	background-color: var(--cor-logo);
+	transition: color 0.7s ease;
+}
+
+.pesquisa-resultados {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 1.2em;
+}
+
+.pesquisa-contagem {
+	margin: 0;
+	font-family: var(--fonte-texto);
+	color: var(--cor-texto);
+}
+
+.pesquisa-card {
+	display: flex;
+	gap: 1.5em;
+
+	text-decoration: none;
+
+	padding: 1em;
+	border: 1px solid lightgray;
+	background-color: white;
+
+	transition: transform 0.5s ease-in-out;
+}
+
+.pesquisa-card:hover {
+    transform: translateY(-2px);
+    transition: transform 0.5s ease-in-out;
+	border-color: var(--cor-logo);
+}
+
+.pesquisa-card-img {
+	width: 180px;
+	height: 180px;
+	flex-shrink: 0;
+	object-fit: cover;
+}
+
+.pesquisa-card-sem-foto {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	background-color: var(--cor-alt2);
+	color: gray;
+	font-size: 3em;
+}
+
+.pesquisa-card-info {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 0.6em;
+}
+
+.pesquisa-card-titulo {
+	margin: 0;
+	font-family: var(--fonte-titulo);
+	font-size: 1.3em;
+	color: var(--cor-logo);
+}
+
+.pesquisa-card-tags {
+	display: flex;
+	gap: 0.5em;
+}
+
+.pesquisa-card-tag {
+	padding: 0.2em 0.7em;
+	border: 1px solid var(--cor-logo);
+
+	font-family: var(--fonte-texto);
+	font-size: 0.85em;
+	font-weight: 500;
+	color: var(--cor-logo);
+}
+
+.pesquisa-card-tag-venda {
+	background-color: var(--cor-logo);
+	color: var(--cor-alt2);
+}
+
+.pesquisa-card-tag-locacao {
+	background-color: var(--cor-alt3);
+	border-color: var(--cor-alt3);
+	color: var(--cor-alt2);
+}
+
+.pesquisa-card-preco {
+	margin: 0;
+	font-family: var(--fonte-titulo);
+	font-size: 1.4em;
+	font-weight: 800;
+	color: var(--cor-texto);
+}
+
+.pesquisa-card-endereco {
+	margin: 0;
+	font-family: var(--fonte-texto);
+	color: #444;
+}
+
+@media (max-width: 800px) {
+	.area-pesquisa {
+		flex-direction: column;
+		align-items: stretch;
+		padding: 1.5em;
+	}
+
+	.pesquisa-filtro {
+		width: auto;
+	}
+}
+
+/* Área de Pesquisa */
+
+/* Área de Detalhe da Publicação */
+
+#app-detalhe {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--cor-alt2);
+}
+
+.detalhe-aviso {
+	margin: 2em 4em;
+	font-family: var(--fonte-texto);
+}
+
+.area-detalhe {
+	flex-grow: 1;
+	display: flex;
+	align-items: flex-start;
+	gap: 2em;
+	padding: 2em 4em 4em 4em;
+}
+
+.detalhe-principal {
+	flex-grow: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1.5em;
+}
+
+.detalhe-bloco {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8em;
+
+	padding: 1.5em;
+	border: 1px solid lightgray;
+	background-color: white;
+}
+
+.detalhe-subtitulo {
+	margin: 0;
+	font-size: 1.1em;
+	color: var(--cor-logo);
+}
+
+.detalhe-preco {
+	font-size: 1.8em;
+}
+
+.detalhe-preco-sufixo {
+	font-family: var(--fonte-texto);
+	font-size: 0.5em;
+	font-weight: 400;
+}
+
+.detalhe-meta,
+.detalhe-linha {
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.4em;
+	font-family: var(--fonte-texto);
+	color: #444;
+}
+
+.detalhe-descricao {
+	margin: 0;
+	font-family: var(--fonte-texto);
+	color: var(--cor-texto);
+	line-height: 1.6;
+	white-space: pre-line;
+}
+
+.detalhe-sucesso {
+	margin: 0;
+	font-family: var(--fonte-texto);
+	font-size: smaller;
+	font-weight: 500;
+	color: var(--cor-alt1);
+}
+
+/* Características */
+
+.detalhe-caracteristicas {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+	gap: 1em;
+}
+
+.detalhe-carac {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2em;
+	padding: 0.8em;
+	border: 1px solid lightgray;
+	background-color: var(--cor-alt2);
+	font-family: var(--fonte-texto);
+}
+
+.detalhe-carac i {
+	font-size: 1.6em;
+	color: var(--cor-logo);
+}
+
+.detalhe-carac span {
+	font-weight: 500;
+	color: var(--cor-texto);
+}
+
+.detalhe-carac small {
+	color: #555;
+}
+
+/* Galeria */
+
+.galeria-grade {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+	gap: 0.8em;
+}
+
+.galeria-figura {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4em;
+}
+
+.galeria-legenda {
+	font-family: var(--fonte-texto);
+	font-size: 0.9em;
+	font-weight: 500;
+	color: var(--cor-logo);
+	text-align: center;
+}
+
+.lightbox-figura {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6em;
+}
+
+.lightbox-legenda {
+	font-family: var(--fonte-texto);
+	font-size: 1.1em;
+	color: var(--cor-alt2);
+}
+
+.galeria-item {
+	aspect-ratio: 4 / 3;
+	background-color: var(--cor-alt2);
+	border: 1px solid lightgray;
+	overflow: hidden;
+	cursor: pointer;
+}
+
+.galeria-item-carregando {
+	background-image: linear-gradient(90deg, var(--cor-alt2) 25%, #e4e4e4 50%, var(--cor-alt2) 75%);
+	background-size: 200% 100%;
+	animation: galeria-brilho 1.4s linear infinite;
+}
+
+.galeria-item {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.galeria-erro {
+	font-size: 2.5em;
+	color: gray;
+}
+
+.galeria-item img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+	transition: transform 0.5s ease-in-out;
+}
+
+.galeria-item:hover img {
+	transform: scale(1.04);
+}
+
+@keyframes galeria-brilho {
+	from { background-position: 200% 0; }
+	to { background-position: -200% 0; }
+}
+
+.lightbox {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background-color: rgba(11, 13, 7, 0.85);
+}
+
+.lightbox img {
+	max-width: 90vw;
+	max-height: 90vh;
+	object-fit: contain;
+}
+
+.lightbox-fechar {
+	position: absolute;
+	top: 1em;
+	right: 1em;
+	border: 0;
+	background: none;
+	color: var(--cor-alt2);
+	font-size: 2em;
+	cursor: pointer;
+}
+
+/* Agendamento */
+
+.detalhe-agenda {
+	width: 320px;
+	position: sticky;
+	top: 1em;
+}
+
+.calendario {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6em;
+	padding: 0.8em;
+	background-color: white;
+	border: 1px solid var(--cor-logo);
+}
+
+.calendario-topo {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.calendario-mes {
+	font-family: var(--fonte-titulo);
+	font-weight: 600;
+	color: var(--cor-logo);
+}
+
+.calendario-nav {
+	border: 1px solid lightgray;
+	background-color: var(--cor-alt2);
+	color: var(--cor-logo);
+	padding: 0.3em 0.5em;
+	cursor: pointer;
+}
+
+.calendario-nav:hover:not(:disabled) {
+	background-color: var(--cor-logo);
+	color: var(--cor-alt2);
+	transition: color 0.7s ease;
+}
+
+.calendario-nav:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+.calendario-grade {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 3px;
+}
+
+.calendario-semana {
+	text-align: center;
+	font-family: var(--fonte-titulo);
+	font-size: 0.8em;
+	font-weight: 600;
+	color: #555;
+}
+
+.calendario-dia {
+	position: relative;
+	aspect-ratio: 1;
+	border: 1px solid lightgray;
+	background-color: white;
+	font-family: var(--fonte-texto);
+	color: var(--cor-texto);
+	cursor: pointer;
+}
+
+.calendario-dia:hover:not(:disabled) {
+	border-color: var(--cor-logo);
+}
+
+.calendario-dia:disabled {
+	color: #bbb;
+	background-color: var(--cor-alt2);
+	cursor: default;
+}
+
+.calendario-dia-hoje {
+	font-weight: 800;
+	border-color: var(--cor-alt3);
+}
+
+/* Dia que já possui visita agendada */
+.calendario-dia-visita {
+	background-color: #e3ecd2;
+}
+
+.calendario-dia-visita::after,
+.calendario-ponto {
+	content: '';
+	position: absolute;
+	bottom: 3px;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 6px;
+	height: 6px;
+	border-radius: 50%;
+	background-color: var(--cor-alt3);
+}
+
+.calendario-dia-selecionado,
+.calendario-dia-selecionado:hover:not(:disabled) {
+	background-color: var(--cor-logo);
+	border-color: var(--cor-logo);
+	color: var(--cor-alt2);
+}
+
+.calendario-legenda {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.calendario-legenda .calendario-ponto {
+	position: static;
+	transform: none;
+	flex-shrink: 0;
+}
+
+.horarios-grade {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0.5em;
+}
+
+.horario-botao {
+	padding: 0.5em 0;
+	font-family: var(--fonte-texto);
+	font-weight: 500;
+	color: var(--cor-texto);
+	background-color: var(--cor-alt2);
+	border: 1px solid gray;
+	cursor: pointer;
+}
+
+.horario-botao:hover:not(:disabled) {
+	background-color: var(--cor-alt1);
+	color: var(--cor-alt2);
+	transition: color 0.7s ease;
+}
+
+.horario-botao:disabled {
+	color: #aaa;
+	text-decoration: line-through;
+	cursor: default;
+}
+
+.horario-botao-ativo,
+.horario-botao-ativo:hover:not(:disabled) {
+	background-color: var(--cor-logo);
+	color: var(--cor-alt2);
+}
+
+.detalhe-agenda .submit-login {
+	justify-content: center;
+}
+
+.detalhe-agenda .submit-login:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+@media (max-width: 900px) {
+	.area-detalhe {
+		flex-direction: column;
+		align-items: stretch;
+		padding: 1.5em;
+	}
+
+	.detalhe-agenda {
+		width: auto;
+		position: static;
+	}
+}
+
+/* Área de Detalhe da Publicação */
+
+/* Área de Perfil (Meus dados) */
+
+#app-perfil {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--cor-alt2);
+}
+ 
+.area-perfil {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 1.5em;
+	padding: 2em 10em 4em 10em;
+}
+ 
+.perfil-dados {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1em;
+}
+ 
+.perfil-dado {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2em;
+	padding: 0.8em;
+	border: 1px solid lightgray;
+	background-color: var(--cor-alt2);
+	font-family: var(--fonte-texto);
+}
+ 
+.perfil-dado small {
+	color: #555;
+}
+ 
+.perfil-dado span {
+	font-weight: 500;
+	color: var(--cor-texto);
+	overflow-wrap: anywhere;
+}
+ 
+.perfil-acoes {
+	display: flex;
+}
+ 
+.perfil-acoes .submit-login:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+ 
+@media (max-width: 900px) {
+	.area-perfil {
+		padding: 1.5em;
+	}
+}
+ 
+/* Área de Perfil */
+
+/* Área do Painel do Corretor */
+
+#app-painel-corretor {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--cor-alt2);
+}
+
+.area-painel {
+	flex-grow: 1;
+	display: flex;
+	flex-direction: column;
+	gap: 1.5em;
+	padding: 2em 10em 4em 10em;
+}
+
+.painel-secao-topo {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 1em;
+}
+
+.painel-secao-topo .detalhe-subtitulo {
+	font-size: 1.3em;
+}
+
+.painel-secao-topo .pesquisa-limpar {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.painel-lista {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+}
+
+/* Cartão de visita / contrato */
+
+.painel-card {
+	display: flex;
+	align-items: stretch;
+	justify-content: space-between;
+	gap: 1.5em;
+
+	padding: 1em;
+	border: 1px solid lightgray;
+	background-color: white;
+
+	transition: border-color 0.5s ease-in-out;
+}
+
+.painel-card:hover {
+	border-color: var(--cor-logo);
+}
+
+.painel-card-info {
+	flex-grow: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.8em;
+}
+
+.painel-card-acoes {
+	flex-shrink: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	gap: 0.7em;
+}
+
+.painel-card-acoes .submit-login,
+.painel-card-acoes .pesquisa-limpar {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5em;
+}
+
+.painel-card-acoes .submit-login:disabled,
+.painel-modal-botoes .submit-login:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.painel-card-arquivada {
+	background-color: var(--cor-alt2);
+}
+
+.painel-card-arquivada .perfil-dado {
+	background-color: white;
+}
+
+/* Janela (modal) */
+
+.painel-modal-fundo {
+	position: fixed;
+	inset: 0;
+	z-index: 10;
+
+	display: flex;
+	overflow-y: auto;
+	padding: 2em 1em;
+
+	background-color: rgba(11, 13, 7, 0.85);
+}
+
+/* Segunda janela aberta por cima da primeira (cadastro de fiador) */
+.painel-modal-fundo-topo {
+	z-index: 11;
+}
+
+.painel-modal {
+	width: 100%;
+	max-width: 640px;
+	box-sizing: border-box;
+	margin: auto;
+	padding: 1.5em;
+
+	display: flex;
+	flex-direction: column;
+	gap: 1.3em;
+
+	background-color: white;
+	border: 1px solid var(--cor-logo);
+	border-top: 4px solid var(--cor-logo);
+}
+
+.painel-modal-topo {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1em;
+}
+
+.painel-modal-titulo {
+	margin: 0;
+	font-family: var(--fonte-titulo);
+	font-size: 1.3em;
+	color: var(--cor-logo);
+}
+
+.painel-modal-fechar {
+	border: 0;
+	background: none;
+	color: var(--cor-logo);
+	font-size: 1.6em;
+	cursor: pointer;
+}
+
+.painel-modal-botoes {
+	display: flex;
+	justify-content: flex-end;
+	flex-wrap: wrap;
+	gap: 1em;
+}
+
+.painel-modal .login-input-box input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.painel-opcoes-linha {
+	display: flex;
+	gap: 1.5em;
+	padding-left: 1em;
+}
+
+.painel-opcoes-linha > span {
+	display: flex;
+	align-items: center;
+	gap: 0.3em;
+}
+
+.painel-dias {
+	max-width: 340px;
+}
+
+.painel-fiador {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 1em;
+
+	padding: 0.8em;
+	border: 1px solid lightgray;
+	background-color: var(--cor-alt2);
+	font-family: var(--fonte-texto);
+}
+
+.painel-fiador small {
+	display: block;
+	color: #555;
+}
+
+.painel-fiador span {
+	font-weight: 500;
+	color: var(--cor-texto);
+}
+
+.painel-fiador .pesquisa-limpar {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.pesquisa-limpar:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Campos já existentes dentro de uma janela mais estreita */
+
+.painel-modal .box-cadastro-telefones {
+	padding-left: 0;
+}
+
+.painel-modal .cadastro-telefones-dados .login-input-box {
+	flex-grow: 1;
+}
+
+.painel-modal .add-telefone {
+	width: auto;
+	padding: 0.5em 1em;
+}
+
+.painel-modal .cadastro-endereco {
+	padding-left: 0;
+	gap: 1em;
+}
+
+.painel-modal .cadastro-endereco-dados {
+	flex-wrap: wrap;
+	gap: 1em;
+}
+
+.painel-modal .cadastro-endereco-dados .login-input-box {
+	flex: 1 1 160px;
+}
+
+.painel-arquivo-atual {
+	margin: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.4em;
+	font-family: var(--fonte-texto);
+	font-size: smaller;
+	color: var(--cor-alt1);
+	overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+	.area-painel {
+		padding: 1.5em;
+	}
+
+	.painel-card {
+		flex-direction: column;
+	}
+
+	.painel-card-acoes {
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+}
+
+/* Área do Painel do Corretor */
+
+/* Área do Painel do Proprietário */
+
+#app-painel-proprietario {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--cor-alt2);
+}
+
+/* Bloco principal com o botão "Criar nova publicação" */
+
+.detalhe-bloco-painel {
+	padding: 1.5em;
+	border: 1px solid lightgray;
+	background-color: white;
+}
+
+.painel-principal {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 1em;
+}
+
+.painel-principal .submit-login,
+.painel-secao-topo .submit-login {
+	display: flex;
+	align-items: center;
+	gap: 0.5em;
+}
+
+.painel-principal .submit-login:disabled,
+.painel-secao-topo .submit-login:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+/* Botão com aparência de .pesquisa-limpar, mas que é um link */
+
+.painel-link-botao {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5em;
+	text-decoration: none;
+	box-sizing: border-box;
+}
+
+.painel-card-acoes .painel-link-botao {
+	align-self: stretch;
+}
+
+.painel-sublista-titulo {
+	margin: 0;
+	font-family: var(--fonte-titulo);
+	font-size: 1em;
+	font-weight: 600;
+	color: var(--cor-alt3);
+}
+
+/* Janelas maiores (cadastro de imóvel e de publicação) */
+
+.painel-modal.painel-modal-largo {
+	max-width: 820px;
+}
+
+.painel-modal .cadastro-tipo-imoveis {
+	flex-wrap: wrap;
+}
+
+.painel-modal-linha {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1em;
+}
+
+.painel-modal-linha .login-input-box {
+	flex: 1 1 160px;
+}
+
+/* Campo de texto longo (descrição do imóvel), no mesmo desenho do .login-input-box input */
+
+.painel-textarea {
+	width: 100%;
+	box-sizing: border-box;
+	min-height: 5.5em;
+	padding: 10px;
+	resize: vertical;
+
+	font-family: var(--fonte-texto);
+	font-weight: 400;
+	font-size: 1em;
+
+	border: 1px solid var(--cor-logo);
+}
+
+.painel-contador {
+	margin: 0;
+	align-self: flex-end;
+	font-family: var(--fonte-texto);
+	font-size: smaller;
+	color: #555;
+}
+
+/* Escolha do imóvel a publicar */
+
+.painel-imovel-opcoes {
+	display: flex;
+	flex-direction: column;
+	gap: 0.6em;
+}
+
+.painel-imovel-opcao {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.8em;
+
+	padding: 0.8em;
+	border: 1px solid lightgray;
+	background-color: white;
+	font-family: var(--fonte-texto);
+	cursor: pointer;
+
+	transition: border-color 0.5s ease-in-out;
+}
+
+.painel-imovel-opcao:hover:not(.painel-imovel-opcao-desabilitada) {
+	border-color: var(--cor-logo);
+}
+
+.painel-imovel-opcao-escolhida {
+	border-color: var(--cor-logo);
+	background-color: #e3ecd2;
+}
+
+.painel-imovel-opcao-desabilitada {
+	background-color: var(--cor-alt2);
+	color: #888;
+	cursor: default;
+}
+
+.painel-imovel-opcao-texto {
+	display: flex;
+	flex-direction: column;
+	gap: 0.2em;
+	min-width: 0;
+}
+
+.painel-imovel-opcao-texto span {
+	font-weight: 500;
+	overflow-wrap: anywhere;
+}
+
+.painel-imovel-opcao-texto small {
+	color: #555;
+}
+
+/* Fotos da publicação */
+
+.painel-fotos-grade {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1em;
+}
+
+.painel-foto-card {
+	display: flex;
+	flex-direction: column;
+	gap: 0.7em;
+
+	padding: 0.8em;
+	border: 1px solid lightgray;
+	background-color: white;
+}
+
+.painel-foto-card-capa {
+	border-color: var(--cor-logo);
+	border-top: 4px solid var(--cor-logo);
+}
+
+.painel-foto-card img {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+	background-color: var(--cor-alt2);
+}
+
+.painel-foto-nome {
+	margin: 0;
+	font-family: var(--fonte-texto);
+	font-size: smaller;
+	color: #555;
+	overflow-wrap: anywhere;
+}
+
+.painel-foto-capa-opcao {
+	display: flex;
+	align-items: center;
+	gap: 0.4em;
+}
+
+.painel-foto-rodape {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5em;
+}
+
+.painel-foto-card .login-input-box input {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.painel-foto-remover {
+	padding: 0.3em 0.7em;
+	font-family: var(--fonte-texto);
+	color: darkred;
+	background: none;
+	border: 1px solid darkred;
+	cursor: pointer;
+}
+
+.painel-foto-remover:hover {
+	color: white;
+	background-color: darkred;
+	transition: color 0.4s ease;
+}
+
+.painel-modal input[type="file"] {
+	font-family: var(--fonte-texto);
+}
+
+/* Área do Painel do Proprietário */
+
+/* Área do Painel do Cliente */
+
+#app-painel-cliente {
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+	background-color: var(--cor-alt2);
+}
+
+/* Cartão de locação: linha de cima (dados + ação) e, abaixo, os recibos */
+
+.painel-card-coluna {
+	flex-direction: column;
+}
+
+.painel-card-linha {
+	display: flex;
+	align-items: stretch;
+	justify-content: space-between;
+	gap: 1.5em;
+}
+
+/* Recibos */
+
+.painel-recibos {
+	display: flex;
+	flex-direction: column;
+	gap: 1em;
+
+	padding-top: 1em;
+	border-top: 1px solid lightgray;
+}
+
+.painel-recibos-filtros {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1.5em 3em;
+}
+
+.painel-recibo {
+	display: flex;
+	flex-direction: column;
+	gap: 0.8em;
+
+	padding: 0.8em;
+	border: 1px solid lightgray;
+	background-color: var(--cor-alt2);
+}
+
+.painel-recibo .perfil-dado {
+	background-color: white;
+}
+
+.painel-recibo-topo {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1em;
+}
+
+.painel-recibo-competencia {
+	display: flex;
+	align-items: center;
+	gap: 0.4em;
+	font-family: var(--fonte-titulo);
+	font-weight: 600;
+	color: var(--cor-logo);
+}
+
+.pesquisa-card-tag-atraso {
+	background-color: darkred;
+	border-color: darkred;
+	color: var(--cor-alt2);
+}
+
+@media (max-width: 900px) {
+	.painel-card-linha {
+		flex-direction: column;
+	}
+}
+
+/* Área do Painel do Cliente */

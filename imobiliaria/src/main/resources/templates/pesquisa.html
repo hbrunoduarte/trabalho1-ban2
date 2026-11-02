@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Imobiliária | Pesquisa de imóveis</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div id="app-pesquisa">
+        <barra-superior></barra-superior>
+        <div class="box-cadastro-titulo">
+            <h1 class="cadastro-titulo">Pesquisa de imóveis</h1>
+        </div>
+        <div class="area-pesquisa">
+
+            <form class="pesquisa-filtro" @submit.prevent="pesquisar">
+                <input-box
+                    label="Título"
+                    placeholder="Digite parte do título"
+                    v-model="filtro.titulo"
+                    :erro="errosForm.titulo"
+                ></input-box>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Tipo de publicação</label>
+                    <div class="cadastro-tipo-imoveis">
+                        <div class="opcao-tipo-imovel">
+                            <input type="radio" id="pub_todas" v-model="filtro.tipoPublicacao" value="">
+                            <label class="cadastro-opcoes" for="pub_todas">Todas</label>
+                        </div>
+                        <div class="opcao-tipo-imovel">
+                            <input type="radio" id="pub_venda" v-model="filtro.tipoPublicacao" value="V">
+                            <label class="cadastro-opcoes" for="pub_venda">Venda</label>
+                        </div>
+                        <div class="opcao-tipo-imovel">
+                            <input type="radio" id="pub_locacao" v-model="filtro.tipoPublicacao" value="L">
+                            <label class="cadastro-opcoes" for="pub_locacao">Locação</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Faixa de Preço</label>
+                    
+                    <div class="slider-container">
+                        <label class="cadastro-opcoes">Mín: {{ formatarPreco(filtro.valorMin) }}</label>
+                        <input 
+                            type="range" 
+                            v-model.number="filtro.valorMin" 
+                            min="0" 
+                            :max="tetoPreco" 
+                            step="10000" 
+                            class="slider-preco"
+                        >
+                        
+                        <label class="cadastro-opcoes">Máx: {{ formatarPreco(filtro.valorMax) }}</label>
+                        <input 
+                            type="range" 
+                            v-model.number="filtro.valorMax" 
+                            min="0" 
+                            :max="tetoPreco" 
+                            step="10000" 
+                            class="slider-preco"
+                        >
+                    </div>
+                </div>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Tipo de imóvel</label>
+                    <div class="cadastro-tipo-imoveis">
+                        <div class="opcao-tipo-imovel">
+                            <input type="radio" id="tipo_todos" v-model="filtro.tipoImovel" value="">
+                            <label class="cadastro-opcoes" for="tipo_todos">Todos</label>
+                        </div>
+                        <div v-for="tipo in tiposImoveis" :key="tipo.idTipoImovel" class="opcao-tipo-imovel">
+                            <input type="radio" :id="'filtro_tipo_' + tipo.idTipoImovel" :value="tipo.idTipoImovel" v-model="filtro.tipoImovel">
+                            <label class="cadastro-opcoes" :for="'filtro_tipo_' + tipo.idTipoImovel">{{ tipo.descricao }}</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Localização</label>
+                    <input-box
+                        label="CEP"
+                        placeholder="Digite o CEP"
+                        v-model="filtro.cep"
+                        :erro="errosForm.cep"
+                    ></input-box>
+                    <p class="pesquisa-dica">Com o CEP informado, estado, cidade, bairro e rua são ignorados.</p>
+                    <input-box
+                        label="Estado"
+                        placeholder="Sigla do estado"
+                        v-model="filtro.estado"
+                        :erro="errosForm.estado"
+                    ></input-box>
+                    <input-box
+                        label="Cidade"
+                        placeholder="Nome da cidade"
+                        v-model="filtro.cidade"
+                        :erro="errosForm.cidade"
+                    ></input-box>
+                    <input-box
+                        label="Bairro"
+                        placeholder="Nome do bairro"
+                        v-model="filtro.bairro"
+                        :erro="errosForm.bairro"
+                    ></input-box>
+                    <input-box
+                        label="Rua"
+                        placeholder="Nome da rua"
+                        v-model="filtro.rua"
+                        :erro="errosForm.rua"
+                    ></input-box>
+                    <input-box
+                        label="Número"
+                        type="number"
+                        placeholder="Número do imóvel"
+                        v-model="filtro.numero"
+                        :erro="errosForm.numero"
+                    ></input-box>
+                </div>
+
+                <p v-show="errosForm.geral" class="login-input-invalido">{{ errosForm.geral }}</p>
+
+                <div class="pesquisa-filtro-botoes">
+                    <button type="submit" class="submit-login">
+                        <i class="ph ph-magnifying-glass icone-pesquisa"></i>
+                        <span>Pesquisar</span>
+                    </button>
+                    <button type="button" class="pesquisa-limpar" @click="limparFiltro">Limpar</button>
+                </div>
+            </form>
+
+            <div class="pesquisa-resultados">
+                <p class="pesquisa-contagem" v-if="!carregando && pesquisou">
+                    {{ publicacoes.length }} {{ publicacoes.length === 1 ? 'imóvel encontrado' : 'imóveis encontrados' }}
+                </p>
+                <p class="pesquisa-contagem" v-if="carregando">Carregando...</p>
+
+                <a :href="'/api/publicacoes/id/' + pub.idPublicacao" @click.prevent="atualizarENavegar(pub.idPublicacao)" class="pesquisa-card" v-for="pub in publicacoes" :key="pub.idPublicacao">
+                    <img v-if="pub.fotoCapa" class="pesquisa-card-img" :src="'data:image/jpeg;base64,' + pub.fotoCapa" :alt="'Foto de ' + pub.titulo">
+                    <div v-else class="pesquisa-card-img pesquisa-card-sem-foto">
+                        <i class="ph ph-image"></i>
+                    </div>
+                    <div class="pesquisa-card-info">
+                        <h2 class="pesquisa-card-titulo">{{ pub.titulo }}</h2>
+                        <div class="pesquisa-card-tags">
+                            <span class="pesquisa-card-tag" :class="pub.tipoPublicacao === 'Venda' ? 'pesquisa-card-tag-venda' : 'pesquisa-card-tag-locacao'">
+                                {{ pub.tipoPublicacao === 'Venda' ? 'Venda' : 'Locação' }}
+                            </span>
+                            <span class="pesquisa-card-tag">{{ pub.tipoImovel }}</span>
+                        </div>
+                        <p class="pesquisa-card-preco">{{ formatarPreco(pub.valor) }}</p>
+                        <p class="pesquisa-card-endereco">{{ pub.estado }} - {{ pub.cidade }} - {{ pub.bairro }}</p>
+                    </div>
+                </a>
+
+                <p class="pesquisa-contagem" v-if="!carregando && pesquisou && publicacoes.length === 0">
+                    Nenhum imóvel encontrado com esses filtros.
+                </p>
+            </div>
+
+        </div>
+        <barra-inferior></barra-inferior>
+    </div>
+
+<script type="module" th:inline="none">
+
+import { createApp, ref, onMounted, watch } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+import BarraSuperior from '/components/BarraSuperior.js'
+import BarraInferior from '/components/BarraInferior.js'
+import InputBox from '/components/InputBox.js'
+
+createApp({
+components: {
+    BarraSuperior,
+    BarraInferior,
+    InputBox
+},
+setup() {
+
+    // Mesmos campos do FiltroPublicacaoDTO
+    const filtroVazio = () => ({
+        titulo: '',
+        tipoPublicacao: '',
+        tipoImovel: '',
+        cep: '',
+        estado: '',
+        cidade: '',
+        bairro: '',
+        rua: '',
+        numero: '',
+        valorMin: 0,
+        valorMax: 10000000
+    })
+
+    const filtro = ref(filtroVazio())
+    const publicacoes = ref([])
+    const tiposImoveis = ref([])
+    const errosForm = ref({})
+    const carregando = ref(false)
+    const pesquisou = ref(false)
+    const tetoPreco = ref(10000000)
+
+    const formatadorPreco = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+    const formatarPreco = (valor) => valor == null ? 'Preço não informado' : formatadorPreco.format(valor)
+
+    async function getTiposImoveis() {
+        try {
+            const resposta = await fetch('/api/imoveis/tipos')
+            if (resposta.ok) tiposImoveis.value = await resposta.json()
+        } catch (erro) {
+            console.error('Falha ao carregar tipos de imóvel:', erro)
+        }
+    }
+
+    async function getMaiorValor(tipoPublicacao) {
+        try {
+            const resposta = await fetch('/api/imoveis/maior_preco/' + tipoPublicacao)
+            if (resposta.ok) {
+                const valorTexto = await resposta.text();
+                tetoPreco.value = parseFloat(valorTexto);
+                filtro.value.valorMax = filtro.value.valorMax <= tetoPreco.value ? filtro.value.valorMax : tetoPreco.value
+            }
+        } catch (erro) {
+            console.error('Falha ao obter valor máximo:', erro)
+        }
+    }
+
+    watch(() => filtro.value.valorMin, (novoMin) => {
+        if (novoMin > filtro.value.valorMax) {
+            filtro.value.valorMin = filtro.value.valorMax;
+        }
+    });
+
+    watch(() => filtro.value.valorMax, (novoMax) => {
+        if (novoMax < filtro.value.valorMin) {
+            filtro.value.valorMax = filtro.value.valorMin;
+        }
+    });
+
+    async function pesquisar() {
+
+        getMaiorValor(filtro.value.tipoPublicacao)
+
+        carregando.value = true
+        errosForm.value = {}
+
+        const params = new URLSearchParams()
+        for (const [chave, valor] of Object.entries(filtro.value)) {
+            let texto = String(valor).trim()
+            if (chave === 'cep') texto = texto.replace(/\D/g, '')
+            if (texto !== '') params.append(chave, texto)
+        }
+
+        try {
+            const response = await fetch('/api/publicacoes?' + params.toString())
+
+            if (!response.ok) {
+                try {
+                    errosForm.value = await response.json()
+                } catch {
+                    errosForm.value = { geral: 'Não foi possível carregar os imóveis. Tente novamente mais tarde.' }
+                }
+                return
+            }
+
+            publicacoes.value = await response.json()
+            pesquisou.value = true
+
+        } catch (error) {
+            console.error('Erro na rede:', error)
+            errosForm.value = { geral: 'Servidor indisponível. Verifique sua conexão e tente novamente.' }
+        } finally {
+            carregando.value = false
+        }
+    }
+
+    function limparFiltro() {
+        filtro.value = filtroVazio()
+        pesquisar()
+    }
+
+    async function atualizarENavegar(idPublicacao) {
+        try {
+            const resposta = await fetch('/api/publicacoes/acesso/' + idPublicacao, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (!resposta.ok) {
+                console.error('Erro ao atualizar o banco de dados.');
+            }
+            
+            window.location.href = '/publicacao/' + idPublicacao
+
+        } catch (erro) {
+            console.error('Falha de conexão:', erro);
+        }
+    }
+
+    onMounted(() => {
+
+        const usuario = {
+            id: localStorage.getItem('id_usuario'),
+            tipo: localStorage.getItem('usuario')
+        }
+
+        console.log(usuario)
+
+        getTiposImoveis()
+        pesquisar()
+        getMaiorValor("")
+    })
+
+    return {
+        filtro,
+        publicacoes,
+        tiposImoveis,
+        errosForm,
+        carregando,
+        pesquisou,
+        tetoPreco,
+        formatarPreco,
+        pesquisar,
+        limparFiltro,
+        atualizarENavegar
+    }
+
+}
+}).mount('#app-pesquisa');
+</script>
+</body>
+</html>

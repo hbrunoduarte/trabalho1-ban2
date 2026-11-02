@@ -1,4 +1,4 @@
-package com.duarte.imobiliaria.formsValidation;
+package com.duarte.imobiliaria.formsValidation.util;
 
 public final class ValidacaoConstants {
 
@@ -13,9 +13,6 @@ public final class ValidacaoConstants {
     public static final int CIDADE_MAX_SIZE = 30;
     public static final int COMPLEMENTO_MAX_SIZE = 10;
     public static final int NUMERO_ENDERECO_MAX = 999_999;
-
-    // Constantes para o login
-    public static final int LOGIN_MAX_SIZE = EMAIL_MAX_SIZE;
     public static final int SENHA_MAX_SIZE = 72;
 
     // Constantes para o cadastro
@@ -36,4 +33,5 @@ public final class ValidacaoConstants {
     public static final String CPF_PATTERN = "[0-9]{3}[\\.]?[0-9]{3}[\\.]?[0-9]{3}[-]?[0-9]{2}";
     public static final String CNPJ_PATTERN = "[0-9]{2}[\\.]?[0-9]{3}[\\.]?[0-9]{3}[\\/]?[0-9]{4}[-]?[0-9]{2}";
     public static final String SENHA_PATTERN = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[@#$%^&+=_]).*$";
+    public static final String CRECI_PATTERN = "^\\d{1,6}-?[Ff]/[A-Za-z]{2}$";
 }

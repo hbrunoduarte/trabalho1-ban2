@@ -1,5 +1,7 @@
 package com.duarte.imobiliaria.model;
 
+import java.util.Arrays;
+
 public enum CodigoBancos {
     BancoBrasil(1),
     Santander(33),
@@ -18,4 +20,19 @@ public enum CodigoBancos {
         this.codigo = codigo;
     }
 
+    public int getCodigo() {
+        return codigo;
+    }
+
+    public static int getCodigoByOrdinal(int i) {
+        return values()[i].getCodigo();
+    }
+
+    public static int getOrdinalByCodigo(int cod) {
+        for (CodigoBancos v : values()) {
+            if (v.getCodigo() == cod)
+                return v.ordinal();
+        }
+        return -1;
+    }
 }

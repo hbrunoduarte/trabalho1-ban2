@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Imobiliária | Meus dados</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div id="app-perfil">
+        <barra-superior></barra-superior>
+
+        <div class="box-cadastro-titulo">
+            <h1 class="cadastro-titulo">Meus dados</h1>
+        </div>
+
+        <p class="detalhe-aviso" v-if="carregando">Carregando...</p>
+        <p class="detalhe-aviso login-input-invalido" v-else-if="erro">{{ erro }}</p>
+
+        <div class="area-perfil" v-if="perfil">
+
+            <div class="detalhe-bloco">
+                <div class="pesquisa-card-tags">
+                    <span class="pesquisa-card-tag pesquisa-card-tag-venda">{{ rotuloTipo }}</span>
+                </div>
+                <h2 class="cadastro-label detalhe-subtitulo">Dados cadastrais</h2>
+                <div class="perfil-dados">
+                    <div class="perfil-dado" v-for="d in dadosCadastrais" :key="d.rotulo">
+                        <small>{{ d.rotulo }}</small>
+                        <span>{{ d.valor }}</span>
+                    </div>
+                </div>
+                <p class="pesquisa-dica">Para alterar estes dados, entre em contato com a imobiliária.</p>
+            </div>
+
+            <form class="detalhe-bloco" @submit.prevent="salvarEmail">
+                <h2 class="cadastro-label detalhe-subtitulo">E-mail</h2>
+                <input-box
+                    label="E-mail"
+                    placeholder="Digite seu e-mail"
+                    v-model="formEmail"
+                    :erro="status.email.erros.email"
+                ></input-box>
+                <p v-show="status.email.erros.geral" class="login-input-invalido">{{ status.email.erros.geral }}</p>
+                <p v-show="status.email.ok" class="detalhe-sucesso">{{ status.email.ok }}</p>
+                <div class="perfil-acoes">
+                    <button type="submit" class="submit-login" :disabled="status.email.salvando">
+                        <i class="ph ph-floppy-disk icone-pesquisa"></i>
+                        <span>{{ status.email.salvando ? 'Salvando...' : 'Salvar e-mail' }}</span>
+                    </button>
+                </div>
+            </form>
+
+            <form class="detalhe-bloco" @submit.prevent="salvarSenha">
+                <h2 class="cadastro-label detalhe-subtitulo">Senha</h2>
+                <input-box
+                    label="Senha atual"
+                    type="password"
+                    placeholder="Digite sua senha atual"
+                    v-model="formSenha.senhaAtual"
+                    :erro="status.senha.erros.senhaAtual"
+                ></input-box>
+                <input-box
+                    label="Nova senha"
+                    type="password"
+                    placeholder="Digite a nova senha"
+                    v-model="formSenha.novaSenha"
+                    :erro="status.senha.erros.novaSenha"
+                ></input-box>
+                <input-box
+                    label="Confirmar nova senha"
+                    type="password"
+                    placeholder="Repita a nova senha"
+                    v-model="formSenha.confirmacao"
+                    :erro="status.senha.erros.confirmacao"
+                ></input-box>
+                <p v-show="status.senha.erros.geral" class="login-input-invalido">{{ status.senha.erros.geral }}</p>
+                <p v-show="status.senha.ok" class="detalhe-sucesso">{{ status.senha.ok }}</p>
+                <div class="perfil-acoes">
+                    <button type="submit" class="submit-login" :disabled="status.senha.salvando">
+                        <i class="ph ph-lock-key icone-pesquisa"></i>
+                        <span>{{ status.senha.salvando ? 'Salvando...' : 'Alterar senha' }}</span>
+                    </button>
+                </div>
+            </form>
+
+            <form class="detalhe-bloco" @submit.prevent="salvarTelefones">
+                <h2 class="cadastro-label detalhe-subtitulo">{{ maxTelefones === 1 ? 'Telefone' : 'Telefones' }}</h2>
+                <div class="box-cadastro-telefones">
+                    <div class="cadastro-telefones" v-for="(telefone, index) in formTelefones" :key="index">
+                        <div class="cadastro-telefones-dados">
+                            <input-box
+                                :label="maxTelefones === 1 ? 'Telefone' : 'Telefone ' + (index + 1)"
+                                placeholder="Digite seu telefone"
+                                v-model="formTelefones[index]"
+                                :erro="status.telefones.erros[`telefones[${index}]`]"
+                            ></input-box>
+                            <button class="remover-telefone" type="button" v-if="formTelefones.length > 1" @click="removerTelefone(index)">
+                                Remover
+                            </button>
+                        </div>
+                    </div>
+                    <button class="add-telefone" type="button" @click="adicionarTelefone" v-if="formTelefones.length < maxTelefones">
+                        + Adicionar outro telefone
+                    </button>
+                </div>
+                <p v-show="status.telefones.erros.geral" class="login-input-invalido">{{ status.telefones.erros.geral }}</p>
+                <p v-show="status.telefones.ok" class="detalhe-sucesso">{{ status.telefones.ok }}</p>
+                <div class="perfil-acoes">
+                    <button type="submit" class="submit-login" :disabled="status.telefones.salvando">
+                        <i class="ph ph-phone icone-pesquisa"></i>
+                        <span>{{ status.telefones.salvando ? 'Salvando...' : 'Salvar telefones' }}</span>
+                    </button>
+                </div>
+            </form>
+
+            <form class="detalhe-bloco" v-if="formEndereco" @submit.prevent="salvarEndereco">
+                <h2 class="cadastro-label detalhe-subtitulo">Endereço</h2>
+                <div class="cadastro-endereco">
+                    <div class="cadastro-endereco-dados">
+                        <input-box label="Rua" placeholder="Nome da rua" v-model="formEndereco.rua" :erro="status.endereco.erros.rua"></input-box>
+                        <input-box label="Número da residência" placeholder="Número da residência" v-model="formEndereco.numero" :erro="status.endereco.erros.numero"></input-box>
+                        <input-box label="Bairro" placeholder="Nome do bairro" v-model="formEndereco.bairro" :erro="status.endereco.erros.bairro"></input-box>
+                        <input-box label="Complemento" placeholder="Escreva um complemento" v-model="formEndereco.complemento" :erro="status.endereco.erros.complemento"></input-box>
+                    </div>
+                    <div class="cadastro-endereco-dados">
+                        <input-box label="Cidade" placeholder="Nome da cidade" v-model="formEndereco.cidade" :erro="status.endereco.erros.cidade"></input-box>
+                        <input-box label="Estado" placeholder="Sigla do estado" v-model="formEndereco.estado" :erro="status.endereco.erros.estado"></input-box>
+                        <input-box label="CEP" placeholder="Digite seu CEP" v-model="formEndereco.cep" :erro="status.endereco.erros.cep"></input-box>
+                    </div>
+                </div>
+                <p v-show="status.endereco.erros.geral" class="login-input-invalido">{{ status.endereco.erros.geral }}</p>
+                <p v-show="status.endereco.ok" class="detalhe-sucesso">{{ status.endereco.ok }}</p>
+                <div class="perfil-acoes">
+                    <button type="submit" class="submit-login" :disabled="status.endereco.salvando">
+                        <i class="ph ph-map-pin icone-pesquisa"></i>
+                        <span>{{ status.endereco.salvando ? 'Salvando...' : 'Salvar endereço' }}</span>
+                    </button>
+                </div>
+            </form>
+
+            <form class="detalhe-bloco" v-if="formBanco" @submit.prevent="salvarBanco">
+                <h2 class="cadastro-label detalhe-subtitulo">Dados bancários</h2>
+                <div class="cadastro-bancario">
+                    <div class="cadastro-dados-bancarios">
+                        <div class="cadastro-db-agencia-conta">
+                            <input-box label="Número da agência" placeholder="Número da agência" v-model="formBanco.agencia" :erro="status.banco.erros.agencia"></input-box>
+                            <input-box label="Número da conta" placeholder="Número da conta" v-model="formBanco.conta" :erro="status.banco.erros.conta"></input-box>
+                        </div>
+                        <div class="cadastro-db-dv-tipoconta">
+                            <input-box label="Dígito verificador" placeholder="Dígito verificador" v-model="formBanco.dv" :erro="status.banco.erros.dv"></input-box>
+                        </div>
+                    </div>
+                    <div class="box-seletor-banco">
+                        <label class="cadastro-label">Banco</label>
+                        <div class="seletor-banco">
+                            <template v-for="b in bancos" :key="b.id">
+                                <input type="radio" :id="'perfil_banco_' + b.id" v-model="formBanco.banco" :value="b.id">
+                                <label :for="'perfil_banco_' + b.id">
+                                    <img :src="'/img/bancos/' + b.arquivo" :class="{'seletor-banco-escolhido': formBanco.banco === b.id}" :alt="b.nome" :title="b.nome">
+                                </label>
+                            </template>
+                        </div>
+                        <p v-show="status.banco.erros.banco" class="login-input-invalido">{{ status.banco.erros.banco }}</p>
+                    </div>
+                </div>
+                <p v-show="status.banco.erros.geral" class="login-input-invalido">{{ status.banco.erros.geral }}</p>
+                <p v-show="status.banco.ok" class="detalhe-sucesso">{{ status.banco.ok }}</p>
+                <div class="perfil-acoes">
+                    <button type="submit" class="submit-login" :disabled="status.banco.salvando">
+                        <i class="ph ph-bank icone-pesquisa"></i>
+                        <span>{{ status.banco.salvando ? 'Salvando...' : 'Salvar dados bancários' }}</span>
+                    </button>
+                </div>
+            </form>
+
+        </div>
+
+        <barra-inferior></barra-inferior>
+    </div>
+
+<script type="module">
+import { createApp, ref, computed, onMounted } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+import BarraSuperior from '/components/BarraSuperior.js'
+import BarraInferior from '/components/BarraInferior.js'
+import InputBox from '/components/InputBox.js'
+
+createApp({
+components: {
+    BarraSuperior,
+    BarraInferior,
+    InputBox
+},
+setup() {
+
+    const bancos = [
+        { id: 0, arquivo: 'bb.png', nome: 'Banco do Brasil S.A.' },
+        { id: 1, arquivo: 'santander.png', nome: 'Banco Santander S.A.' },
+        { id: 2, arquivo: 'inter.png', nome: 'Banco Inter S.A.' },
+        { id: 3, arquivo: 'caixa.png', nome: 'Caixa Econômica Federal' },
+        { id: 4, arquivo: 'bradesco.png', nome: 'Banco Bradesco S.A.' },
+        { id: 5, arquivo: 'nubank.png', nome: 'Nu Pagamentos S.A.' },
+        { id: 6, arquivo: 'itau.png', nome: 'Itaú Unibanco S.A.' },
+        { id: 7, arquivo: 'c6bank.png', nome: 'Banco C6 S.A.' },
+        { id: 8, arquivo: 'sicoob.png', nome: 'Sicoob' },
+        { id: 9, arquivo: 'sicredi.png', nome: 'Banco Cooperativo Sicredi S.A.' }
+    ]
+
+    const perfil = ref(null)
+    const tiposImoveis = ref([])
+    const carregando = ref(true)
+    const erro = ref('')
+
+    const formEmail = ref('')
+    const formSenha = ref({ senhaAtual: '', novaSenha: '', confirmacao: '' })
+    
+    const formTelefones = ref([''])
+    const formTelefonesIds = ref([null]) 
+    
+    const formEndereco = ref(null)
+    const formBanco = ref(null)
+
+    const novoStatus = () => ({ salvando: false, erros: {}, ok: '' })
+    const status = ref({
+        email: novoStatus(),
+        senha: novoStatus(),
+        telefones: novoStatus(),
+        endereco: novoStatus(),
+        banco: novoStatus()
+    })
+
+    const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+    const pad = (n) => String(n).padStart(2, '0')
+
+    const normalizarData = (d) => Array.isArray(d) ? `${d[0]}-${pad(d[1])}-${pad(d[2])}` : String(d).slice(0, 10)
+    const formatarData = (d) => {
+        const [a, m, dia] = normalizarData(d).split('-')
+        return `${dia}/${m}/${a}`
+    }
+    const formatarCpf = (v) => String(v).replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4')
+    const formatarCnpj = (v) => String(v).replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5')
+
+    const tipoUsuario = computed(() => {
+        if (!perfil.value) return '';
+        if (perfil.value.cliente) return 'CLIENTE';
+        if (perfil.value.proprietario) return 'PROPRIETARIO';
+        if (perfil.value.corretor) return 'CORRETOR';
+        return '';
+    })
+
+    const rotuloTipo = computed(() => ({
+        CLIENTE: 'Cliente',
+        PROPRIETARIO: 'Proprietário',
+        CORRETOR: 'Corretor'
+    }[tipoUsuario.value] ?? 'Usuário'))
+
+    const maxTelefones = computed(() => tipoUsuario.value === 'CORRETOR' ? 1 : 3)
+
+    const dadosCadastrais = computed(() => {
+        if (!perfil.value) return []
+        
+        const p = perfil.value.cliente || perfil.value.proprietario || perfil.value.corretor;
+
+        const itens = []
+        const add = (rotulo, valor) => {
+            if (valor !== null && valor !== undefined && valor !== '') itens.push({ rotulo, valor })
+        }
+
+        if (tipoUsuario.value === 'PROPRIETARIO' && p.cnpj) {
+            add('Razão social', p.razaoSocial)
+            add('CNPJ', p.cnpj && formatarCnpj(p.cnpj))
+        } else {
+            add('Nome completo', p.nome)
+            add('CPF', p.cpf && formatarCpf(p.cpf))
+        }
+
+        if (tipoUsuario.value === 'CLIENTE') {
+            add('Profissão', p.profissao)
+            add('Renda mensal', p.rendaMensal != null ? formatadorMoeda.format(p.rendaMensal) : null)
+            add('Tipo de imóvel procurado', tiposImoveis.value[p.tipoInteressado-1]?.descricao) 
+        }
+
+        if (tipoUsuario.value === 'CORRETOR') {
+            add('CRECI', p.creci)
+            add('Percentual de comissão', p.percentualComissao != null
+                ? (p.percentualComissao * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + '%'
+                : null)
+            add('Data de admissão', p.dataAdmissao ? formatarData(p.dataAdmissao) : null)
+        }
+
+        return itens
+    })
+
+    function preencherFormularios() {
+        if (!perfil.value) return;
+        const p = perfil.value.cliente || perfil.value.proprietario || perfil.value.corretor;
+
+        formEmail.value = p.email ?? ''
+        formSenha.value = { senhaAtual: '', novaSenha: '', confirmacao: '' }
+
+        formTelefones.value = []
+        formTelefonesIds.value = []
+
+        if (perfil.value.corretor) {
+            formTelefones.value.push(p.telefone || '')
+            formTelefonesIds.value.push(null)
+        } else {
+            const list = perfil.value.telefones || []
+            if (list.length > 0) {
+                list.slice(0, maxTelefones.value).forEach(t => {
+                    formTelefones.value.push(t.telefone || '')
+                    formTelefonesIds.value.push(t.idTelefone || null)
+                })
+            } else {
+                formTelefones.value.push('')
+                formTelefonesIds.value.push(null)
+            }
+        }
+
+        const end = perfil.value.endereco
+        formEndereco.value = end ? {
+            rua: end.rua ?? '',
+            numero: end.numero ?? '',
+            bairro: end.bairro ?? '',
+            complemento: end.complemento ?? '',
+            cidade: end.cidade ?? '',
+            estado: end.estado ?? '',
+            cep: end.cep ?? ''
+        } : null
+
+        formBanco.value = (perfil.value.proprietario && p.banco != null) ? {
+            banco: p.banco ?? 0,
+            agencia: p.agencia ?? '',
+            conta: p.conta ?? '',
+            dv: p.dv ?? ''
+        } : null
+    }
+
+    async function getPerfil() {
+        try {
+            const resposta = await fetch('/api/perfil')
+
+            if (resposta.status === 401) {
+                window.location.href = '/login'
+                return
+            }
+            if (!resposta.ok) {
+                erro.value = 'Não foi possível carregar seus dados. Tente novamente mais tarde.'
+                return
+            }
+
+            perfil.value = await resposta.json()
+            preencherFormularios()
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            erro.value = 'Servidor indisponível. Verifique sua conexão e tente novamente.'
+        } finally {
+            carregando.value = false
+        }
+    }
+
+    const CHAVES_VISIVEIS = /^(email|senhaAtual|novaSenha|confirmacao|rua|numero|bairro|complemento|cidade|estado|cep|banco|agencia|conta|dv|telefones\[\d+\]|geral)$/
+
+    async function lerErros(response) {
+        try {
+            const corpo = await response.json()
+            const traduzidos = {}
+            for (const [chave, mensagem] of Object.entries(corpo)) {
+                let chaveNormal = chave.replace(/^(cliente|proprietario|corretor|endereco)\./, '');
+                if (chaveNormal === 'senha') chaveNormal = 'novaSenha'; 
+                
+                chaveNormal = chaveNormal.replace(/\.telefone$/, '');
+                if (chaveNormal === 'telefones' || chaveNormal === 'telefone') chaveNormal = 'telefones[0]';
+                
+                const destino = CHAVES_VISIVEIS.test(chaveNormal) ? chaveNormal : 'geral'
+                if (!traduzidos[destino]) traduzidos[destino] = mensagem
+                else if (destino === 'geral') traduzidos.geral += ' ' + mensagem
+            }
+            return traduzidos
+        } catch {
+            return { geral: 'Não foi possível salvar. Tente novamente mais tarde.' }
+        }
+    }
+
+    async function salvar(secao) {
+        const st = status.value[secao]
+        st.erros = {}
+        st.ok = ''
+        st.salvando = true
+
+        try {
+            const payload = JSON.parse(JSON.stringify(perfil.value));
+            const u = payload.cliente || payload.proprietario || payload.corretor;
+            let url = '/api/perfil'
+            
+            let dadosParaEnviar = payload;
+
+            if (secao === 'email') {
+                u.email = formEmail.value.trim();
+            } else if (secao === 'senha') {
+
+                const p = perfil.value.cliente || perfil.value.proprietario || perfil.value.corretor
+
+                console.log(p.senha)
+
+                if (formSenha.value.senhaAtual !== p.senha) {
+                    status.value.senha.erros.senhaAtual = 'Senha incorreta'
+                    return
+                }
+                status.value.senha.erros.senhaAtual = ''
+
+                u.senha = formSenha.value.novaSenha;
+            } else if (secao === 'telefones') {
+                if (payload.corretor) {
+                    u.telefone = formTelefones.value[0].trim();
+                } else {
+                    url += '/telefone'
+                    payload.telefones = formTelefones.value.map((t, i) => ({
+                        idTelefone: formTelefonesIds.value[i] || null,
+                        telefone: t.trim()
+                    }));
+                    dadosParaEnviar = payload.telefones; 
+                }
+            } else if (secao === 'endereco') {
+                url += '/endereco'
+                payload.endereco = {
+                    cep: String(formEndereco.value.cep).replace(/\D/g, ''),
+                    estado: formEndereco.value.estado,
+                    cidade: formEndereco.value.cidade,
+                    bairro: formEndereco.value.bairro,
+                    rua: formEndereco.value.rua,
+                    numero: parseInt(formEndereco.value.numero) || null,
+                    complemento: formEndereco.value.complemento
+                };
+                dadosParaEnviar = payload.endereco;
+            } else if (secao === 'banco') {
+                u.banco = formBanco.value.banco;
+                u.agencia = formBanco.value.agencia;
+                u.conta = formBanco.value.conta;
+                u.dv = formBanco.value.dv;
+            }
+
+            const resposta = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(dadosParaEnviar) 
+            })
+
+            if (resposta.status === 401) {
+                window.location.href = '/login'
+                return
+            }
+            if (!resposta.ok) {
+                st.erros = await lerErros(resposta)
+                return
+            }
+
+            perfil.value = payload;
+            if (secao === 'senha') {
+                formSenha.value = { senhaAtual: '', novaSenha: '', confirmacao: '' };
+            }
+            
+            st.ok = 'Dados atualizados com sucesso.'
+            await getPerfil()
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            st.erros = { geral: 'Servidor indisponível. Verifique sua conexão e tente novamente.' }
+        } finally {
+            st.salvando = false
+        }
+    }
+    function salvarEmail() {
+        salvar('email')
+    }
+
+    function salvarSenha() {
+        const f = formSenha.value
+        if (f.novaSenha !== f.confirmacao) {
+            const st = status.value.senha
+            st.ok = ''
+            st.erros = { confirmacao: 'As senhas não coincidem.' }
+            return
+        }
+        salvar('senha')
+    }
+
+    const adicionarTelefone = () => {
+        if (formTelefones.value.length < maxTelefones.value) {
+            formTelefones.value.push('')
+            formTelefonesIds.value.push(null)
+        }
+    }
+    
+    async function removerTelefone(index) {
+
+        const id = formTelefonesIds.value[index];
+
+        if (!id) {
+            formTelefones.value.splice(index, 1);
+            formTelefonesIds.value.splice(index, 1);
+            return;
+        }
+
+        const response = await fetch(`/api/perfil/telefone/${id}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const erros = await lerErros(response);
+            alert(erros.geral || "Erro ao remover telefone.");
+            return;
+        }
+
+        formTelefones.value.splice(index, 1);
+        formTelefonesIds.value.splice(index, 1);
+        
+        await getPerfil();
+    }
+
+    function salvarTelefones() {
+        salvar('telefones')
+    }
+
+    function salvarEndereco() {
+        salvar('endereco')
+    }
+
+    function salvarBanco() {
+        salvar('banco')
+    }
+
+    async function getTiposImoveis() {
+        const response = await fetch('/api/imoveis/tipos')
+        if (response.ok) {
+            tiposImoveis.value = await response.json()
+        }
+    }
+
+    onMounted(() =>{
+        getTiposImoveis()
+        getPerfil()
+    })
+
+    return {
+        tiposImoveis, perfil, carregando, erro, status, bancos,
+        rotuloTipo, dadosCadastrais, maxTelefones,
+        formEmail, formSenha, formTelefones, formEndereco, formBanco,
+        adicionarTelefone, removerTelefone,
+        salvarEmail, salvarSenha, salvarTelefones, salvarEndereco, salvarBanco
+    }
+
+}
+}).mount('#app-perfil');
+</script>
+</body>
+</html>

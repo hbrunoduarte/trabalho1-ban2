@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Imobiliária | Painel</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div id="app-painel-corretor">
+        <barra-superior></barra-superior>
+
+        <div class="box-cadastro-titulo">
+            <h1 class="cadastro-titulo">Painel do corretor</h1>
+        </div>
+
+        <p class="detalhe-aviso login-input-invalido" v-if="erro">{{ erro }}</p>
+
+        <div class="area-painel">
+
+            <p class="detalhe-sucesso" v-if="sucesso">{{ sucesso }}</p>
+
+            <div class="detalhe-bloco">
+                <div class="painel-secao-topo">
+                    <h2 class="cadastro-label detalhe-subtitulo">Visitas realizadas</h2>
+                    <button type="button" class="pesquisa-limpar" v-if="totalArquivadas > 0" @click="mostrarArquivadas = !mostrarArquivadas">
+                        <i class="ph ph-archive icone-pesquisa"></i>
+                        <span>{{ mostrarArquivadas ? 'Ocultar arquivadas' : 'Ver arquivadas (' + totalArquivadas + ')' }}</span>
+                    </button>
+                </div>
+
+                <p class="detalhe-aviso" v-if="carregandoVisitas">Carregando...</p>
+                <p class="pesquisa-dica" v-else-if="visitasExibidas.length === 0">
+                    {{ totalArquivadas > 0 && !mostrarArquivadas ? 'Nenhuma visita pendente. Há visitas arquivadas.' : 'Você ainda não possui visitas realizadas pendentes.' }}
+                </p>
+
+                <div class="painel-lista">
+                    <div class="painel-card" :class="{ 'painel-card-arquivada': v.arquivada }" v-for="v in visitasExibidas" :key="v.idVisita">
+                        <div class="painel-card-info">
+                            <div class="pesquisa-card-tags">
+                                <span class="pesquisa-card-tag" :class="v.tipoContrato === 'VENDA' ? 'pesquisa-card-tag-venda' : 'pesquisa-card-tag-locacao'" v-if="v.tipoContrato">
+                                    {{ v.tipoContrato === 'VENDA' ? 'Venda' : 'Locação' }}
+                                </span>
+                                <span class="pesquisa-card-tag" v-else>{{ v.arquivada ? 'Arquivada' : 'Visita futura' }}</span>
+                            </div>
+                            <p class="detalhe-linha" v-if="v.endereco"><i class="ph ph-map-pin"></i> {{ v.endereco }}</p>
+                            <div class="perfil-dados">
+                                <div class="perfil-dado">
+                                    <small>Proprietário</small>
+                                    <span>{{ v.proprietario }}</span>
+                                </div>
+                                <div class="perfil-dado">
+                                    <small>Cliente</small>
+                                    <span>{{ v.cliente }}</span>
+                                </div>
+                                <div class="perfil-dado">
+                                    <small>Data da visita</small>
+                                    <span>{{ formatarData(v.data) }}<template v-if="v.horario"> às {{ formatarHorario(v.horario) }}</template></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="painel-card-acoes">
+                            <button type="button" class="submit-login" :disabled="!v.tipoContrato" :title="v.tipoContrato ? '' : 'Este imóvel não está disponível para novos contratos'" @click="abrirFirmar(v)">
+                                <i class="ph ph-file-text icone-pesquisa"></i>
+                                <span>Firmar contrato</span>
+                            </button>
+                            <button type="button" :disabled="v.arquivada" class="pesquisa-limpar" @click="alternarArquivo(v)">
+                                <i class="ph icone-pesquisa ph-archive"></i>
+                                <span>Arquivar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTRATOS FIRMADOS (INALTERADO) -->
+            <div class="detalhe-bloco">
+                <div class="painel-secao-topo">
+                    <h2 class="cadastro-label detalhe-subtitulo">Contratos firmados</h2>
+                </div>
+
+                <p class="detalhe-aviso" v-if="carregandoContratos">Carregando...</p>
+                <p class="pesquisa-dica" v-else-if="contratos.length === 0">Você ainda não firmou nenhum contrato.</p>
+
+                <div class="painel-lista">
+                    <div class="painel-card" v-for="c in contratos" :key="c.tipo + c.id">
+                        <div class="painel-card-info">
+                            <div class="pesquisa-card-tags">
+                                <span class="pesquisa-card-tag" :class="c.tipo === 'VENDA' ? 'pesquisa-card-tag-venda' : 'pesquisa-card-tag-locacao'">
+                                    {{ c.tipo === 'VENDA' ? 'Venda' : 'Locação' }}
+                                </span>
+                                <span class="pesquisa-card-tag" v-if="c.status">{{ c.status }}</span>
+                            </div>
+                            <p class="detalhe-linha"><i class="ph ph-map-pin"></i> {{ c.endereco }}</p>
+                            <div class="perfil-dados">
+                                <div class="perfil-dado" v-for="d in dadosContrato(c)" :key="d.rotulo">
+                                    <small>{{ d.rotulo }}</small>
+                                    <span>{{ d.valor }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- JANELAS MODAIS (INALTERADAS) -->
+        <div class="painel-modal-fundo" v-if="modal === 'locacao'" @click.self="fecharModal">
+            <!-- (Conteúdo original do modal de locação foi mantido igual) -->
+            <form class="painel-modal" @submit.prevent="enviarLocacao">
+                <div class="painel-modal-topo">
+                    <h2 class="painel-modal-titulo">Firmar contrato de locação</h2>
+                    <button type="button" class="painel-modal-fechar" aria-label="Fechar" @click="fecharModal"><i class="ph ph-x"></i></button>
+                </div>
+                <p class="pesquisa-dica">{{ resumoVisita }}</p>
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Tipo de garantia</label>
+                    <div class="cadastro-tipo-imoveis">
+                        <div class="opcao-tipo-imovel" v-for="g in garantias" :key="g.valor">
+                            <input type="radio" :id="'garantia_' + g.id" v-model="formLocacao.garantia" :value="g.valor">
+                            <label class="cadastro-opcoes" :for="'garantia_' + g.id">{{ g.rotulo }}</label>
+                        </div>
+                    </div>
+                    <p v-show="errosLocacao.garantia" class="login-input-invalido">{{ errosLocacao.garantia }}</p>
+                </div>
+                <div class="pesquisa-filtro-grupo" v-if="formLocacao.garantia === 'FIADOR'">
+                    <div class="painel-fiador" v-if="formLocacao.fiador">
+                        <div>
+                            <span>{{ formLocacao.fiador.nome }}</span>
+                            <small>CPF {{ formatarCpf(formLocacao.fiador.cpf) }}</small>
+                        </div>
+                        <button type="button" class="pesquisa-limpar" @click="abrirFiador">
+                            <i class="ph ph-pencil-simple icone-pesquisa"></i>
+                            <span>Editar fiador</span>
+                        </button>
+                    </div>
+                    <button type="button" class="pesquisa-limpar" v-else @click="abrirFiador">
+                        <i class="ph ph-user-plus icone-pesquisa"></i>
+                        <span>Cadastrar fiador</span>
+                    </button>
+                    <p v-show="errosLocacao.fiador" class="login-input-invalido">{{ errosLocacao.fiador }}</p>
+                </div>
+                <input-box v-if="formLocacao.garantia === 'DEPOSITO CAUCAO'" label="Valor do depósito caução (R$)" placeholder="Ex.: 3000,00" v-model="formLocacao.valorCaucao" :erro="errosLocacao.valorCaucao"></input-box>
+                <input-box label="Duração do contrato (meses)" placeholder="Ex.: 30" v-model="formLocacao.prazoMeses" :erro="errosLocacao.prazoMeses"></input-box>
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Dia de vencimento</label>
+                    <div class="calendario-grade painel-dias">
+                        <button type="button" class="calendario-dia" v-for="d in 28" :key="d" :class="{ 'calendario-dia-selecionado': formLocacao.diaVencimento === d }" @click="formLocacao.diaVencimento = d">{{ d }}</button>
+                    </div>
+                    <p v-show="errosLocacao.diaVencimento" class="login-input-invalido">{{ errosLocacao.diaVencimento }}</p>
+                </div>
+                <p v-show="errosLocacao.geral" class="login-input-invalido">{{ errosLocacao.geral }}</p>
+                <div class="painel-modal-botoes">
+                    <button type="button" class="pesquisa-limpar" @click="fecharModal">Cancelar</button>
+                    <button type="submit" class="submit-login" :disabled="enviando">
+                        <i class="ph ph-file-text icone-pesquisa"></i>
+                        <span>{{ enviando ? 'Firmando...' : 'Firmar contrato' }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="painel-modal-fundo painel-modal-fundo-topo" v-if="modal === 'locacao' && modalFiador" @click.self="modalFiador = false">
+            <!-- (Conteúdo original do modal do fiador) -->
+            <form class="painel-modal" @submit.prevent="salvarFiador">
+                <div class="painel-modal-topo">
+                    <h2 class="painel-modal-titulo">Cadastro do fiador</h2>
+                    <button type="button" class="painel-modal-fechar" aria-label="Fechar" @click="modalFiador = false"><i class="ph ph-x"></i></button>
+                </div>
+                <input-box label="Nome completo" placeholder="Digite o nome do fiador" v-model="formFiador.nome" :erro="errosFiador.nome"></input-box>
+                <input-box label="CPF" placeholder="Digite o CPF do fiador" v-model="formFiador.cpf" :erro="errosFiador.cpf"></input-box>
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Comprovante de renda</label>
+                    <input type="file" accept=".pdf,image/*" @change="lerComprovante">
+                    <p class="painel-arquivo-atual" v-if="formFiador.comprovanteNome"><i class="ph ph-paperclip"></i> {{ formFiador.comprovanteNome }}</p>
+                    <p class="pesquisa-dica">PDF ou imagem de até 5 MB.</p>
+                    <p v-show="errosFiador.comprovanteRenda" class="login-input-invalido">{{ errosFiador.comprovanteRenda }}</p>
+                </div>
+                <label class="cadastro-label">Telefones</label>
+                <div class="box-cadastro-telefones">
+                    <div class="cadastro-telefones" v-for="(telefone, index) in formFiador.telefones" :key="index">
+                        <div class="cadastro-telefones-dados">
+                            <input-box :label="'Telefone ' + (index + 1)" placeholder="Digite o telefone" v-model="formFiador.telefones[index]" :erro="errosFiador[`telefones[${index}]`]"></input-box>
+                            <button class="remover-telefone" type="button" v-if="formFiador.telefones.length > 1" @click="formFiador.telefones.splice(index, 1)">Remover</button>
+                        </div>
+                    </div>
+                    <button class="add-telefone" type="button" v-if="formFiador.telefones.length < 3" @click="formFiador.telefones.push('')">+ Adicionar outro telefone</button>
+                </div>
+                <label class="cadastro-label">Endereço</label>
+                <div class="cadastro-endereco">
+                    <div class="cadastro-endereco-dados">
+                        <input-box label="Rua" placeholder="Nome da rua" v-model="formFiador.endereco.rua" :erro="errosFiador['endereco.rua']"></input-box>
+                        <input-box label="Número da residência" placeholder="Número da residência" v-model="formFiador.endereco.numero" :erro="errosFiador['endereco.numero']"></input-box>
+                        <input-box label="Bairro" placeholder="Nome do bairro" v-model="formFiador.endereco.bairro" :erro="errosFiador['endereco.bairro']"></input-box>
+                        <input-box label="Complemento" placeholder="Escreva um complemento" v-model="formFiador.endereco.complemento" :erro="errosFiador['endereco.complemento']"></input-box>
+                    </div>
+                    <div class="cadastro-endereco-dados">
+                        <input-box label="Cidade" placeholder="Nome da cidade" v-model="formFiador.endereco.cidade" :erro="errosFiador['endereco.cidade']"></input-box>
+                        <input-box label="Estado" placeholder="Sigla do estado" v-model="formFiador.endereco.estado" :erro="errosFiador['endereco.estado']"></input-box>
+                        <input-box label="CEP" placeholder="Digite o CEP" v-model="formFiador.endereco.cep" :erro="errosFiador['endereco.cep']"></input-box>
+                    </div>
+                </div>
+                <p v-show="errosFiador.geral" class="login-input-invalido">{{ errosFiador.geral }}</p>
+                <div class="painel-modal-botoes">
+                    <button type="button" class="pesquisa-limpar" @click="modalFiador = false">Cancelar</button>
+                    <button type="submit" class="submit-login">
+                        <i class="ph ph-floppy-disk icone-pesquisa"></i>
+                        <span>Salvar fiador</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="painel-modal-fundo" v-if="modal === 'venda'" @click.self="fecharModal">
+            <!-- (Conteúdo original do modal de venda) -->
+            <form class="painel-modal" @submit.prevent="enviarVenda">
+                <div class="painel-modal-topo">
+                    <h2 class="painel-modal-titulo">Firmar contrato de venda</h2>
+                    <button type="button" class="painel-modal-fechar" aria-label="Fechar" @click="fecharModal"><i class="ph ph-x"></i></button>
+                </div>
+                <p class="pesquisa-dica">{{ resumoVisita }}</p>
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Haverá valor de sinal?</label>
+                    <div class="painel-opcoes-linha">
+                        <span><input type="radio" id="sinal_sim" v-model="formVenda.haSinal" :value="true"><label class="cadastro-opcoes" for="sinal_sim">Sim</label></span>
+                        <span><input type="radio" id="sinal_nao" v-model="formVenda.haSinal" :value="false"><label class="cadastro-opcoes" for="sinal_nao">Não</label></span>
+                    </div>
+                    <p v-show="errosVenda.haSinal" class="login-input-invalido">{{ errosVenda.haSinal }}</p>
+                </div>
+                <input-box v-if="formVenda.haSinal === true" label="Valor do sinal (R$)" placeholder="Ex.: 20000,00" v-model="formVenda.valorSinal" :erro="errosVenda.valorSinal"></input-box>
+                <input-box label="Forma de pagamento" placeholder="Ex.: Transferência, à vista..." v-model="formVenda.formaPagamento" :erro="errosVenda.formaPagamento"></input-box>
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">O valor foi financiado?</label>
+                    <div class="painel-opcoes-linha">
+                        <span><input type="radio" id="financiado_sim" v-model="formVenda.financiado" :value="true"><label class="cadastro-opcoes" for="financiado_sim">Sim</label></span>
+                        <span><input type="radio" id="financiado_nao" v-model="formVenda.financiado" :value="false"><label class="cadastro-opcoes" for="financiado_nao">Não</label></span>
+                    </div>
+                    <p v-show="errosVenda.financiado" class="login-input-invalido">{{ errosVenda.financiado }}</p>
+                </div>
+                <input-box v-if="formVenda.financiado === true" label="Valor financiado (R$)" placeholder="Ex.: 250000,00" v-model="formVenda.valorFinanciado" :erro="errosVenda.valorFinanciado"></input-box>
+                <p v-show="errosVenda.geral" class="login-input-invalido">{{ errosVenda.geral }}</p>
+                <div class="painel-modal-botoes">
+                    <button type="button" class="pesquisa-limpar" @click="fecharModal">Cancelar</button>
+                    <button type="submit" class="submit-login" :disabled="enviando">
+                        <i class="ph ph-file-text icone-pesquisa"></i>
+                        <span>{{ enviando ? 'Firmando...' : 'Firmar contrato' }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <barra-inferior></barra-inferior>
+    </div>
+
+<script type="module" th:inline="none">
+import { createApp, ref, computed, onMounted } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+import BarraSuperior from '/components/BarraSuperior.js'
+import BarraInferior from '/components/BarraInferior.js'
+import InputBox from '/components/InputBox.js'
+
+createApp({
+components: {
+    BarraSuperior,
+    BarraInferior,
+    InputBox
+},
+setup() {
+
+    const garantias = [
+        { id: 0, valor: 'FIADOR', rotulo: 'Fiador' },
+        { id: 1, valor: 'DEPOSITO CAUCAO', rotulo: 'Depósito caução' },
+        { id: 2, valor: 'SEGURO FIANCA', rotulo: 'Seguro fiança' }
+    ]
+    const COMPROVANTE_MAX_BYTES = 5 * 1024 * 1024
+
+    const visitas = ref([])
+    const contratos = ref([])
+    const carregandoVisitas = ref(true)
+    const carregandoContratos = ref(true)
+    const erro = ref('')
+    const sucesso = ref('')
+    const enviando = ref(false)
+    const mostrarArquivadas = ref(false) // Permanece como controle visual do botão na tela
+
+    const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+    const pad = (n) => String(n).padStart(2, '0')
+
+    const normalizarData = (d) => Array.isArray(d) ? `${d[0]}-${pad(d[1])}-${pad(d[2])}` : String(d).slice(0, 10)
+    const formatarData = (d) => {
+        const [a, m, dia] = normalizarData(d).split('-')
+        return `${dia}/${m}/${a}`
+    }
+    const formatarHorario = (h) => Array.isArray(h) ? `${pad(h[0])}:${pad(h[1])}` : String(h).slice(0, 5)
+    const formatarCpf = (v) => String(v ?? '').replace(/\D/g, '').replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4')
+    const formatarValor = (v) => v != null ? formatadorMoeda.format(v) : '—'
+
+    function lerValor(texto) {
+        const t = String(texto ?? '').trim().replace(/[^\d.,]/g, '')
+        if (t === '') return null
+        const pontoMilhar = /^\d{1,3}(\.\d{3})+$/.test(t)
+        const normal = t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : (pontoMilhar ? t.replace(/\./g, '') : t)
+        const n = Number(normal)
+        return Number.isFinite(n) ? n : NaN
+    }
+
+    async function lerErrosBrutos(response) {
+        try {
+            return await response.json()
+        } catch {
+            return { geral: 'Ocorreu um erro inesperado. Tente novamente mais tarde.' }
+        }
+    }
+
+    function agrupar(brutos, camposVisiveis) {
+        const erros = {}
+        for (const [chave, mensagem] of Object.entries(brutos)) {
+            const destino = camposVisiveis.includes(chave) ? chave : 'geral'
+            if (!erros[destino]) erros[destino] = mensagem
+            else if (destino === 'geral') erros.geral += ' ' + mensagem
+        }
+        return erros
+    }
+
+    async function buscar(url) {
+        const resposta = await fetch(url)
+        if (resposta.status === 401) {
+            window.location.href = '/login'
+            return null
+        }
+        if (resposta.status === 204) return []
+        if (!resposta.ok) {
+            const corpo = await lerErrosBrutos(resposta)
+            throw new Error(corpo.geral || 'Não foi possível carregar os dados.')
+        }
+        return resposta.json()
+    }
+
+    async function carregarVisitas() {
+        carregandoVisitas.value = true
+        try {
+            const [todas, potenciais] = await Promise.all([
+                buscar('/api/painel/corretor/visitas'),
+                buscar('/api/painel/corretor/validarvisitas')
+            ])
+
+            if (todas) {
+                const idsPotenciais = new Set((potenciais || []).map(p => p.idVisita))
+                visitas.value = todas.map(v => {
+
+                    if (!idsPotenciais.has(v.idVisita)) {
+                        return { ...v, tipoContrato: null }
+                    }
+                    return v
+                })
+            }
+        } catch (e) {
+            console.error(e)
+            erro.value = e.message || 'Servidor indisponível. Verifique sua conexão e tente novamente.'
+        } finally {
+            carregandoVisitas.value = false
+        }
+    }
+
+    // Requisição que bate no banco de dados para alterar o status do arquivo
+    async function alternarArquivo(visita) {
+        try {
+            // Nota: ajuste o nome da rota se você o nomeou diferente no Spring Boot
+            const resposta = await fetch(`/api/painel/corretor/visitas/${visita.idVisita}/arquivar`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' }
+            });
+
+            if (resposta.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (resposta.ok) {
+                visita.arquivada = !visita.arquivada;
+            } else {
+                const erros = await lerErrosBrutos(resposta);
+                erro.value = erros.geral || 'Não foi possível alterar a visita.';
+            }
+        } catch (e) {
+            console.error('Erro ao arquivar:', e);
+            erro.value = 'Servidor indisponível. Verifique sua conexão e tente novamente.';
+        }
+
+        await carregarVisitas()
+    }
+
+    // Lógicas computadas para leitura direta do boolean que veio da API ('v.arquivada')
+    const totalArquivadas = computed(() => 
+        visitas.value.filter(v => v.arquivada || !v.tipoContrato).length
+    )
+
+    const visitasExibidas = computed(() =>
+        mostrarArquivadas.value 
+            ? visitas.value 
+            : visitas.value.filter(v => !v.arquivada && v.tipoContrato)
+    )
+
+    async function carregarContratos() {
+        carregandoContratos.value = true
+        try {
+            const dados = await buscar('/api/painel/corretor/contratos')
+            if (dados) contratos.value = dados
+        } catch (e) {
+            console.error(e)
+            erro.value = e.message || 'Servidor indisponível. Verifique sua conexão e tente novamente.'
+        } finally {
+            carregandoContratos.value = false
+        }
+    }
+
+    // ---------- Lógica de formulários inalterada
+
+    const modal = ref(null) 
+    const visitaAtual = ref(null)
+    const modalFiador = ref(false)
+
+    const resumoVisita = computed(() => {
+        const v = visitaAtual.value
+        if (!v) return ''
+        return `${v.endereco} — ${v.cliente} (locatário/comprador) e ${v.proprietario} (proprietário) — ${formatarValor(v.valor)}`
+    })
+
+    const novoFormLocacao = () => ({ garantia: '', valorCaucao: '', prazoMeses: '', diaVencimento: null, fiador: null })
+    const novoFormVenda = () => ({ haSinal: null, valorSinal: '', formaPagamento: '', financiado: null, valorFinanciado: '' })
+    const novoFormFiador = () => ({
+        nome: '', cpf: '', comprovante: '', comprovanteNome: '', telefones: [''],
+        endereco: { rua: '', numero: '', bairro: '', complemento: '', cidade: '', estado: '', cep: '' }
+    })
+
+    const formLocacao = ref(novoFormLocacao())
+    const formVenda = ref(novoFormVenda())
+    const formFiador = ref(novoFormFiador())
+    const errosLocacao = ref({})
+    const errosVenda = ref({})
+    const errosFiador = ref({})
+
+    function abrirFirmar(visita) {
+        sucesso.value = ''
+        visitaAtual.value = visita
+        errosLocacao.value = {}
+        errosVenda.value = {}
+        if (visita.tipoContrato === 'LOCAÇÃO') {
+            formLocacao.value = novoFormLocacao()
+            modal.value = 'locacao'
+        } else if (visita.tipoContrato === 'VENDA') {
+            formVenda.value = novoFormVenda()
+            modal.value = 'venda'
+        }
+    }
+
+    function fecharModal() {
+        modal.value = null
+        modalFiador.value = false
+        visitaAtual.value = null
+    }
+
+    function abrirFiador() {
+        errosFiador.value = {}
+        if (formLocacao.value.fiador) {
+            formFiador.value = JSON.parse(JSON.stringify(formLocacao.value.fiador))
+        } else {
+            formFiador.value = novoFormFiador()
+        }
+        modalFiador.value = true
+    }
+
+    function lerComprovante(evento) {
+        const arquivo = evento.target.files[0]
+        if (!arquivo) return
+        if (arquivo.size > COMPROVANTE_MAX_BYTES) {
+            errosFiador.value = { ...errosFiador.value, comprovanteRenda: 'O comprovante de renda deve ter no máximo 5 MB' }
+            evento.target.value = ''
+            return
+        }
+        const leitor = new FileReader()
+        leitor.onload = () => {
+            formFiador.value.comprovante = String(leitor.result).split(',')[1] ?? ''
+            formFiador.value.comprovanteNome = arquivo.name
+            errosFiador.value = { ...errosFiador.value, comprovanteRenda: '' }
+        }
+        leitor.readAsDataURL(arquivo)
+    }
+
+    function salvarFiador() {
+        const f = formFiador.value
+        const erros = {}
+        const obrigatorio = 'Campo obrigatório'
+
+        if (!f.nome.trim()) erros.nome = obrigatorio
+        if (!f.cpf.trim()) erros.cpf = obrigatorio
+        if (!f.comprovante) erros.comprovanteRenda = 'Anexe o comprovante de renda do fiador'
+        f.telefones.forEach((t, i) => { if (!t.trim()) erros[`telefones[${i}]`] = obrigatorio })
+        for (const campo of ['rua', 'numero', 'bairro', 'cidade', 'estado', 'cep']) {
+            if (!String(f.endereco[campo]).trim()) erros[`endereco.${campo}`] = obrigatorio
+        }
+
+        errosFiador.value = erros
+        if (Object.keys(erros).length > 0) return
+
+        formLocacao.value.fiador = JSON.parse(JSON.stringify(f))
+        errosLocacao.value = { ...errosLocacao.value, fiador: '' }
+        modalFiador.value = false
+    }
+
+    const CAMPOS_LOCACAO = ['garantia', 'valorCaucao', 'prazoMeses', 'diaVencimento', 'fiador', 'geral']
+    const CAMPOS_VENDA = ['haSinal', 'valorSinal', 'formaPagamento', 'financiado', 'valorFinanciado', 'geral']
+
+    function traduzirErroFiador(chave) {
+        let c = chave.replace(/^fiador\./, '').replace(/\.telefone$/, '')
+        if (c === 'telefones' || c === 'telefone') c = 'telefones[0]'
+        return c
+    }
+
+    function montarFiador(f) {
+        return {
+            nome: f.nome.trim(),
+            cpf: f.cpf.replace(/\D/g, ''),
+            comprovanteRenda: f.comprovante,
+            telefones: f.telefones.map(t => ({ telefone: t.trim() })),
+            endereco: {
+                cep: String(f.endereco.cep).replace(/\D/g, ''),
+                estado: f.endereco.estado.trim(),
+                cidade: f.endereco.cidade.trim(),
+                bairro: f.endereco.bairro.trim(),
+                rua: f.endereco.rua.trim(),
+                numero: parseInt(f.endereco.numero) || null,
+                complemento: f.endereco.complemento
+            }
+        }
+    }
+
+    async function enviarContrato(url, payload) {
+        enviando.value = true
+        try {
+            const resposta = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            if (resposta.status === 401) {
+                window.location.href = '/login'
+                return { ok: false, erros: {} }
+            }
+            if (!resposta.ok) return { ok: false, erros: await lerErrosBrutos(resposta) }
+            return { ok: true }
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            return { ok: false, erros: { geral: 'Servidor indisponível. Verifique sua conexão e tente novamente.' } }
+        } finally {
+            enviando.value = false
+        }
+    }
+
+    async function concluir(tipo) {
+        fecharModal()
+        sucesso.value = `Contrato de ${tipo} firmado com sucesso.`
+        await Promise.all([carregarVisitas(), carregarContratos()])
+    }
+
+    async function enviarLocacao() {
+        const f = formLocacao.value
+        const erros = {}
+
+        if (!f.garantia) erros.garantia = 'Selecione o tipo de garantia'
+        const caucao = lerValor(f.valorCaucao)
+        if (f.garantia === 'DEPOSITO CAUCAO' && (caucao == null || Number.isNaN(caucao) || caucao <= 0)) {
+            erros.valorCaucao = 'Informe o valor do depósito caução'
+        }
+        if (f.garantia === 'FIADOR' && !f.fiador) erros.fiador = 'Cadastre o fiador para firmar o contrato'
+
+        const prazo = Number(String(f.prazoMeses).trim())
+        if (!Number.isInteger(prazo) || prazo < 1) erros.prazoMeses = 'A duração deve ser de pelo menos 1 mês'
+        else if (prazo > 600) erros.prazoMeses = 'A duração deve ser de no máximo 600 meses'
+
+        if (!f.diaVencimento) erros.diaVencimento = 'Escolha o dia de vencimento'
+
+        errosLocacao.value = erros
+        if (Object.keys(erros).length > 0) return
+
+        const payload = {
+            idVisita: visitaAtual.value.idVisita,
+            garantia: f.garantia,
+            valorCaucao: f.garantia === 'DEPOSITO CAUCAO' ? caucao : null,
+            prazoMeses: prazo,
+            diaVencimento: f.diaVencimento,
+            fiador: f.garantia === 'FIADOR' ? montarFiador(f.fiador) : null
+        }
+
+        const resultado = await enviarContrato('/api/painel/corretor/contratos/locacao', payload)
+        if (resultado.ok) return concluir('locação')
+
+        const brutos = resultado.erros
+        const doFiador = {}
+        const demais = {}
+        for (const [chave, msg] of Object.entries(brutos)) {
+            if (chave.startsWith('fiador.')) doFiador[traduzirErroFiador(chave)] = msg
+            else demais[chave] = msg
+        }
+        errosLocacao.value = agrupar(demais, CAMPOS_LOCACAO)
+        if (Object.keys(doFiador).length > 0) {
+            errosFiador.value = doFiador
+            formFiador.value = JSON.parse(JSON.stringify(f.fiador))
+            modalFiador.value = true
+        }
+    }
+
+    async function enviarVenda() {
+        const f = formVenda.value
+        const erros = {}
+
+        if (f.haSinal === null) erros.haSinal = 'Informe se haverá valor de sinal'
+        const sinal = lerValor(f.valorSinal)
+        if (f.haSinal === true && (sinal == null || Number.isNaN(sinal) || sinal <= 0)) {
+            erros.valorSinal = 'Informe o valor do sinal'
+        }
+
+        const forma = f.formaPagamento.trim()
+        if (!forma) erros.formaPagamento = 'Campo obrigatório'
+        else if (forma.length > 20) erros.formaPagamento = 'A forma de pagamento deve ter no máximo 20 caracteres'
+
+        if (f.financiado === null) erros.financiado = 'Informe se o valor foi financiado'
+        const financiado = lerValor(f.valorFinanciado)
+        if (f.financiado === true && (financiado == null || Number.isNaN(financiado) || financiado <= 0)) {
+            erros.valorFinanciado = 'Informe o valor financiado'
+        }
+
+        errosVenda.value = erros
+        if (Object.keys(erros).length > 0) return
+
+        const payload = {
+            idVisita: visitaAtual.value.idVisita,
+            haSinal: f.haSinal,
+            valorSinal: f.haSinal ? sinal : null,
+            formaPagamento: forma,
+            financiado: f.financiado,
+            valorFinanciado: f.financiado ? financiado : null
+        }
+
+        const resultado = await enviarContrato('/api/painel/corretor/contratos/venda', payload)
+        if (resultado.ok) return concluir('venda')
+        errosVenda.value = agrupar(resultado.erros, CAMPOS_VENDA)
+        console.log(errosVenda.value)
+    }
+
+    const rotuloGarantia = (g) => ({ 'FIADOR': 'Fiador', 'DEPOSITO CAUCAO': 'Depósito caução', 'SEGURO FIANCA': 'Seguro fiança' }[g] ?? g)
+
+    function dadosContrato(c) {
+        const itens = []
+        const add = (rotulo, valor) => {
+            if (valor !== null && valor !== undefined && valor !== '') itens.push({ rotulo, valor })
+        }
+
+        add('Cliente', c.cliente)
+        add('Proprietário', c.proprietario)
+        add(c.tipo === 'VENDA' ? 'Data da venda' : 'Início da locação', formatarData(c.data))
+        add(c.tipo === 'VENDA' ? 'Valor da venda' : 'Valor do aluguel', formatarValor(c.valor))
+        add('Comissão', formatarValor(c.valorComissao))
+
+        if (c.tipo === 'LOCACAO') {
+            add('Garantia', rotuloGarantia(c.garantia))
+            if (c.valorCaucao != null) add('Depósito caução', formatarValor(c.valorCaucao))
+            if (c.prazoMeses != null) add('Duração', c.prazoMeses + (c.prazoMeses === 1 ? ' mês' : ' meses'))
+            if (c.diaVencimento != null) add('Dia de vencimento', 'Dia ' + c.diaVencimento)
+        } else {
+            if (c.valorSinal != null) add('Valor do sinal', formatarValor(c.valorSinal))
+            add('Forma de pagamento', c.formaPagamento)
+            if (c.valorFinanciado != null) add('Valor financiado', formatarValor(c.valorFinanciado))
+        }
+        return itens
+    }
+
+    onMounted(() => {
+        carregarVisitas()
+        carregarContratos()
+    })
+
+    return {
+        garantias, visitasExibidas, contratos, carregandoVisitas, carregandoContratos, erro, sucesso, enviando,
+        mostrarArquivadas, totalArquivadas, alternarArquivo,
+        modal, modalFiador, resumoVisita,
+        formLocacao, formVenda, formFiador, errosLocacao, errosVenda, errosFiador,
+        abrirFirmar, fecharModal, abrirFiador, lerComprovante, salvarFiador, enviarLocacao, enviarVenda,
+        dadosContrato, formatarData, formatarHorario, formatarCpf
+    }
+}
+}).mount('#app-painel-corretor');
+</script>
+</body>
+</html>

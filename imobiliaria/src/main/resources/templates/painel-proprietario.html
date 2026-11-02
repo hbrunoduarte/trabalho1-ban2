@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Imobiliária | Painel</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div id="app-painel-proprietario">
+        <barra-superior></barra-superior>
+
+        <div class="box-cadastro-titulo">
+            <h1 class="cadastro-titulo">Painel do proprietário</h1>
+        </div>
+
+        <p class="detalhe-aviso login-input-invalido" v-if="erro">{{ erro }}</p>
+
+        <div class="area-painel">
+
+            <p class="detalhe-sucesso" v-if="sucesso">{{ sucesso }}</p>
+
+            <!-- AÇÃO PRINCIPAL -->
+            <div class="detalhe-bloco-painel painel-principal">
+                <div>
+                    <h2 class="cadastro-label detalhe-subtitulo">Publicações</h2>
+                    <p class="pesquisa-dica">Anuncie seus imóveis para que clientes possam encontrá-los e agendar visitas.</p>
+                </div>
+                <button type="button" class="submit-login" @click="abrirPublicacao()">
+                    <i class="ph ph-megaphone icone-pesquisa"></i>
+                    <span>Criar nova publicação</span>
+                </button>
+            </div>
+
+            <!-- VISITAS AGENDADAS -->
+            <div class="detalhe-bloco">
+                <div class="painel-secao-topo">
+                    <h2 class="cadastro-label detalhe-subtitulo">Visitas agendadas</h2>
+                </div>
+
+                <p class="detalhe-aviso" v-if="carregando.visitas">Carregando...</p>
+                <p class="pesquisa-dica" v-else-if="visitas.length === 0">Nenhuma visita agendada para os seus imóveis.</p>
+
+                <div class="painel-lista">
+                    <div class="painel-card" v-for="v in visitas" :key="v.idVisita">
+                        <div class="painel-card-info">
+                            <div class="pesquisa-card-tags" v-if="v.tipoContrato">
+                                <span class="pesquisa-card-tag" :class="v.tipoContrato === 'VENDA' ? 'pesquisa-card-tag-venda' : 'pesquisa-card-tag-locacao'">
+                                    {{ v.tipoContrato === 'VENDA' ? 'Venda' : 'Locação' }}
+                                </span>
+                            </div>
+                            <p class="detalhe-linha" v-if="v.endereco"><i class="ph ph-map-pin"></i> {{ v.endereco }}</p>
+                            <div class="perfil-dados">
+                                <div class="perfil-dado">
+                                    <small>Cliente</small>
+                                    <span>{{ v.cliente }}</span>
+                                </div>
+                                <div class="perfil-dado">
+                                    <small>Data da visita</small>
+                                    <span>{{ formatarData(v.data) }}<template v-if="v.horario"> às {{ formatarHorario(v.horario) }}</template></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTRATOS REALIZADOS (venda e locação, separados) -->
+            <div class="detalhe-bloco">
+                <div class="painel-secao-topo">
+                    <h2 class="cadastro-label detalhe-subtitulo">Contratos de venda</h2>
+                </div>
+
+                <p class="detalhe-aviso" v-if="carregando.contratos">Carregando...</p>
+                <p class="pesquisa-dica" v-else-if="contratosVenda.length === 0">Nenhum dos seus imóveis foi vendido ainda.</p>
+
+                <div class="painel-lista">
+                    <div class="painel-card" v-for="c in contratosVenda" :key="'V' + c.id">
+                        <div class="painel-card-info">
+                            <div class="pesquisa-card-tags">
+                                <span class="pesquisa-card-tag pesquisa-card-tag-venda">Venda</span>
+                            </div>
+                            <p class="detalhe-linha"><i class="ph ph-map-pin"></i> {{ c.endereco }}</p>
+                            <div class="perfil-dados">
+                                <div class="perfil-dado" v-for="d in dadosContrato(c)" :key="d.rotulo">
+                                    <small>{{ d.rotulo }}</small>
+                                    <span>{{ d.valor }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="detalhe-bloco">
+                <div class="painel-secao-topo">
+                    <h2 class="cadastro-label detalhe-subtitulo">Contratos de locação</h2>
+                </div>
+
+                <p class="detalhe-aviso" v-if="carregando.contratos">Carregando...</p>
+                <p class="pesquisa-dica" v-else-if="contratosLocacao.length === 0">Nenhum dos seus imóveis foi alugado ainda.</p>
+
+                <div class="painel-lista">
+                    <div class="painel-card" v-for="c in contratosLocacao" :key="'L' + c.id">
+                        <div class="painel-card-info">
+                            <div class="pesquisa-card-tags">
+                                <span class="pesquisa-card-tag pesquisa-card-tag-locacao">Locação</span>
+                                <span class="pesquisa-card-tag" v-if="c.status">{{ c.status }}</span>
+                            </div>
+                            <p class="detalhe-linha"><i class="ph ph-map-pin"></i> {{ c.endereco }}</p>
+                            <div class="perfil-dados">
+                                <div class="perfil-dado" v-for="d in dadosContrato(c)" :key="d.rotulo">
+                                    <small>{{ d.rotulo }}</small>
+                                    <span>{{ d.valor }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="painel-card-acoes">
+                            <button type="button" class="pesquisa-limpar painel-link-botao" :disabled="!podeReajustar(c)"
+                                :title="podeReajustar(c) ? '' : 'Só é possível reajustar contratos ativos'"
+                                @click="abrirReajuste(c)">
+                                <i class="ph ph-money icone-pesquisa"></i>
+                                <span>Reajustar aluguel</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MEUS IMÓVEIS -->
+            <div class="detalhe-bloco">
+                <div class="painel-secao-topo">
+                    <h2 class="cadastro-label detalhe-subtitulo">Meus imóveis</h2>
+                    <button type="button" class="submit-login" @click="abrirImovel">
+                        <i class="ph ph-plus-circle icone-pesquisa"></i>
+                        <span>Cadastrar novo imóvel</span>
+                    </button>
+                </div>
+
+                <p class="detalhe-aviso" v-if="carregando.imoveis">Carregando...</p>
+                <p class="pesquisa-dica" v-else-if="imoveis.length === 0">Você ainda não cadastrou nenhum imóvel.</p>
+
+                <div class="painel-lista">
+                    <div class="painel-card" v-for="i in imoveis" :key="i.idImovel">
+                        <div class="painel-card-info">
+                            <div class="pesquisa-card-tags">
+                                <span class="pesquisa-card-tag">{{ i.tipoImovel }}</span>
+                                <span class="pesquisa-card-tag" :class="classeStatus(i.status)">{{ rotuloStatus(i.status) }}</span>
+                            </div>
+                            <p class="detalhe-linha"><i class="ph ph-map-pin"></i> {{ i.endereco }}</p>
+                            <div class="perfil-dados">
+                                <div class="perfil-dado" v-for="d in dadosImovel(i)" :key="d.rotulo">
+                                    <small>{{ d.rotulo }}</small>
+                                    <span>{{ d.valor }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="painel-card-acoes">
+                            <a class="pesquisa-limpar painel-link-botao" :href="'/publicacao/' + i.idPublicacaoAtiva" v-if="i.idPublicacaoAtiva">
+                                <i class="ph ph-arrow-square-out icone-pesquisa"></i>
+                                <span>Ver publicação</span>
+                            </a>
+                            <button type="button" class="pesquisa-limpar" v-else :disabled="!podePublicar(i)"
+                                :title="podePublicar(i) ? '' : 'Só é possível publicar imóveis disponíveis para venda ou locação'"
+                                @click="abrirPublicacao(i.idImovel)">
+                                <i class="ph ph-megaphone icone-pesquisa"></i>
+                                <span>Publicar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- JANELA: CADASTRAR IMÓVEL -->
+        <div class="painel-modal-fundo" v-if="modal === 'imovel'" @click.self="fecharModal">
+            <form class="painel-modal painel-modal-largo" @submit.prevent="enviarImovel">
+                <div class="painel-modal-topo">
+                    <h2 class="painel-modal-titulo">Cadastrar novo imóvel</h2>
+                    <button type="button" class="painel-modal-fechar" aria-label="Fechar" @click="fecharModal"><i class="ph ph-x"></i></button>
+                </div>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Tipo do imóvel</label>
+                    <div class="cadastro-tipo-imoveis">
+                        <div v-for="tipo in tiposImoveis" :key="tipo.idTipoImovel" class="opcao-tipo-imovel">
+                            <input type="radio" :id="'imovel_tipo_' + tipo.idTipoImovel" :value="tipo.idTipoImovel" v-model="formImovel.tipo">
+                            <label class="cadastro-opcoes" :for="'imovel_tipo_' + tipo.idTipoImovel">{{ tipo.descricao }}</label>
+                        </div>
+                    </div>
+                    <p v-show="errosImovel.tipo" class="login-input-invalido">{{ errosImovel.tipo }}</p>
+                </div>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Situação do imóvel</label>
+                    <div class="cadastro-tipo-imoveis">
+                        <div v-for="s in statusCadastro" :key="s.valor" class="opcao-tipo-imovel">
+                            <input type="radio" :id="'imovel_status_' + s.id" :value="s.valor" v-model="formImovel.status">
+                            <label class="cadastro-opcoes" :for="'imovel_status_' + s.id">{{ s.rotulo }}</label>
+                        </div>
+                    </div>
+                    <p v-show="errosImovel.status" class="login-input-invalido">{{ errosImovel.status }}</p>
+                </div>
+
+                <div class="painel-modal-linha">
+                    <input-box label="Área total (m²)" placeholder="Ex.: 120,5" v-model="formImovel.areaTotal" :erro="errosImovel.areaTotal"></input-box>
+                    <input-box label="Valor (R$)" placeholder="Venda ou aluguel mensal" v-model="formImovel.valor" :erro="errosImovel.valor"></input-box>
+                    <input-box label="Ano de construção" placeholder="Ex.: 2015" v-model="formImovel.anoConstrucao" :erro="errosImovel.anoConstrucao"></input-box>
+                </div>
+
+                <div class="painel-modal-linha">
+                    <input-box label="Dormitórios" placeholder="Quantidade" v-model="formImovel.qtdDormitorios" :erro="errosImovel.qtdDormitorios"></input-box>
+                    <input-box label="Banheiros" placeholder="Quantidade" v-model="formImovel.qtdBanheiros" :erro="errosImovel.qtdBanheiros"></input-box>
+                    <input-box label="Vagas de garagem" placeholder="Quantidade" v-model="formImovel.qtdVagas" :erro="errosImovel.qtdVagas"></input-box>
+                </div>
+
+                <div class="login-input-box">
+                    <label for="imovel_descricao">Descrição</label>
+                    <textarea id="imovel_descricao" class="painel-textarea" placeholder="Descreva o imóvel" maxlength="150" v-model="formImovel.descricao"></textarea>
+                    <p class="painel-contador">{{ formImovel.descricao.length }}/150</p>
+                    <p v-show="errosImovel.descricao" class="login-input-invalido">{{ errosImovel.descricao }}</p>
+                </div>
+
+                <label class="cadastro-label">Endereço do imóvel</label>
+                <div class="cadastro-endereco">
+                    <div class="cadastro-endereco-dados">
+                        <input-box label="Rua" placeholder="Nome da rua" v-model="formImovel.endereco.rua" :erro="errosImovel['endereco.rua']"></input-box>
+                        <input-box label="Número" placeholder="Número" v-model="formImovel.endereco.numero" :erro="errosImovel['endereco.numero']"></input-box>
+                        <input-box label="Bairro" placeholder="Nome do bairro" v-model="formImovel.endereco.bairro" :erro="errosImovel['endereco.bairro']"></input-box>
+                        <input-box label="Complemento" placeholder="Escreva um complemento" v-model="formImovel.endereco.complemento" :erro="errosImovel['endereco.complemento']"></input-box>
+                    </div>
+                    <div class="cadastro-endereco-dados">
+                        <input-box label="Cidade" placeholder="Nome da cidade" v-model="formImovel.endereco.cidade" :erro="errosImovel['endereco.cidade']"></input-box>
+                        <input-box label="Estado" placeholder="Sigla do estado" v-model="formImovel.endereco.estado" :erro="errosImovel['endereco.estado']"></input-box>
+                        <input-box label="CEP" placeholder="Digite o CEP" v-model="formImovel.endereco.cep" :erro="errosImovel['endereco.cep']"></input-box>
+                    </div>
+                </div>
+
+                <p v-show="errosImovel.geral" class="login-input-invalido">{{ errosImovel.geral }}</p>
+
+                <div class="painel-modal-botoes">
+                    <button type="button" class="pesquisa-limpar" @click="fecharModal">Cancelar</button>
+                    <button type="submit" class="submit-login" :disabled="enviando">
+                        <i class="ph ph-floppy-disk icone-pesquisa"></i>
+                        <span>{{ enviando ? 'Salvando...' : 'Cadastrar imóvel' }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- JANELA: CRIAR PUBLICAÇÃO -->
+        <div class="painel-modal-fundo" v-if="modal === 'publicacao'" @click.self="fecharModal">
+            <form class="painel-modal painel-modal-largo" @submit.prevent="enviarPublicacao">
+                <div class="painel-modal-topo">
+                    <h2 class="painel-modal-titulo">Criar nova publicação</h2>
+                    <button type="button" class="painel-modal-fechar" aria-label="Fechar" @click="fecharModal"><i class="ph ph-x"></i></button>
+                </div>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Imóvel que será publicado</label>
+                    <p class="pesquisa-dica" v-if="imoveis.length === 0">Você ainda não possui imóveis cadastrados. Cadastre um imóvel antes de criar a publicação.</p>
+                    <div class="painel-imovel-opcoes">
+                        <label class="painel-imovel-opcao" v-for="i in imoveis" :key="i.idImovel" :for="'pub_imovel_' + i.idImovel"
+                            :class="{ 'painel-imovel-opcao-desabilitada': !!motivoIndisponivel(i), 'painel-imovel-opcao-escolhida': formPub.idImovel === i.idImovel }">
+                            <input type="radio" :id="'pub_imovel_' + i.idImovel" :value="i.idImovel" v-model="formPub.idImovel" :disabled="!!motivoIndisponivel(i)">
+                            <span class="painel-imovel-opcao-texto">
+                                <span>{{ i.tipoImovel }} — {{ i.endereco }}</span>
+                                <small>{{ rotuloStatus(i.status) }} · {{ formatarValor(i.valor) }}</small>
+                                <small v-if="motivoIndisponivel(i)">{{ motivoIndisponivel(i) }}</small>
+                            </span>
+                        </label>
+                    </div>
+                    <p v-show="errosPub.idImovel" class="login-input-invalido">{{ errosPub.idImovel }}</p>
+                </div>
+
+                <input-box
+                    label="Título da publicação"
+                    placeholder="Ex.: Casa aconchegante no Costa e Silva"
+                    v-model="formPub.titulo"
+                    :erro="errosPub.titulo"
+                ></input-box>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Tipo de publicação</label>
+                    <div class="pesquisa-card-tags" v-if="tipoPublicacaoEscolhido">
+                        <span class="pesquisa-card-tag" :class="tipoPublicacaoEscolhido === 'V' ? 'pesquisa-card-tag-venda' : 'pesquisa-card-tag-locacao'">
+                            {{ tipoPublicacaoEscolhido === 'V' ? 'Venda' : 'Locação' }}
+                        </span>
+                    </div>
+                    <p class="pesquisa-dica">{{ tipoPublicacaoEscolhido ? 'Definido pela situação do imóvel escolhido.' : 'Escolha o imóvel para definir se a publicação é de venda ou de locação.' }}</p>
+                    <p v-show="errosPub.tipoPublicacao" class="login-input-invalido">{{ errosPub.tipoPublicacao }}</p>
+                </div>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Fotos</label>
+                    <input type="file" multiple accept=".jpg,.jpeg,image/jpeg" @change="adicionarFotos">
+                    <p class="pesquisa-dica">Apenas arquivos JPG/JPEG, de até 5 MB cada. Descreva cada foto (até 20 caracteres) e marque qual será a capa.</p>
+                    <p v-show="errosPub.fotos" class="login-input-invalido">{{ errosPub.fotos }}</p>
+
+                    <div class="painel-fotos-grade" v-if="formPub.fotos.length > 0">
+                        <div class="painel-foto-card" v-for="(foto, index) in formPub.fotos" :key="foto.uid"
+                            :class="{ 'painel-foto-card-capa': formPub.capaUid === foto.uid }">
+                            <img :src="foto.previa" :alt="foto.descricao || foto.nome">
+                            <p class="painel-foto-nome">{{ foto.nome }}</p>
+                            <input-box
+                                label="Descrição"
+                                placeholder="Ex.: Sala, Cozinha"
+                                v-model="foto.descricao"
+                                :erro="errosPub['fotos[' + index + ']']"
+                            ></input-box>
+                            <div class="painel-foto-rodape">
+                                <span class="painel-foto-capa-opcao">
+                                    <input type="radio" :id="'capa_' + foto.uid" :value="foto.uid" v-model="formPub.capaUid">
+                                    <label class="cadastro-opcoes" :for="'capa_' + foto.uid">Capa</label>
+                                </span>
+                                <button type="button" class="painel-foto-remover" @click="removerFoto(foto.uid)">Remover</button>
+                            </div>
+                        </div>
+                    </div>
+                    <p v-show="errosPub.indiceCapa" class="login-input-invalido">{{ errosPub.indiceCapa }}</p>
+                </div>
+
+                <p v-show="errosPub.geral" class="login-input-invalido">{{ errosPub.geral }}</p>
+
+                <div class="painel-modal-botoes">
+                    <button type="button" class="pesquisa-limpar" @click="fecharModal">Cancelar</button>
+                    <button type="submit" class="submit-login" :disabled="enviando">
+                        <i class="ph ph-megaphone icone-pesquisa"></i>
+                        <span>{{ enviando ? 'Publicando...' : 'Publicar' }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- JANELA: REAJUSTAR ALUGUEL -->
+        <div class="painel-modal-fundo" v-if="modal === 'reajuste' && contratoReajuste" @click.self="fecharModal">
+            <form class="painel-modal" @submit.prevent="enviarReajuste">
+                <div class="painel-modal-topo">
+                    <h2 class="painel-modal-titulo">Reajustar aluguel</h2>
+                    <button type="button" class="painel-modal-fechar" aria-label="Fechar" @click="fecharModal"><i class="ph ph-x"></i></button>
+                </div>
+
+                <p class="detalhe-linha"><i class="ph ph-map-pin"></i> {{ contratoReajuste.endereco }}</p>
+
+                <div class="perfil-dado">
+                    <small>Aluguel atual</small>
+                    <span>{{ formatarValor(contratoReajuste.valor) }}</span>
+                </div>
+
+                <div class="pesquisa-filtro-grupo">
+                    <label class="cadastro-label">Índice utilizado</label>
+                    <div class="cadastro-tipo-imoveis">
+                        <div v-for="i in indicesReajuste" :key="i.id" class="opcao-tipo-imovel">
+                            <input type="radio" :id="'reajuste_indice_' + i.id" :value="i.id" v-model="formReajuste.indice">
+                            <label class="cadastro-opcoes" :for="'reajuste_indice_' + i.id">{{ i.rotulo }}</label>
+                        </div>
+                    </div>
+                    <input-box
+                        v-if="formReajuste.indice === 'OUTRO'"
+                        label="Nome do índice"
+                        placeholder="Ex.: INPC"
+                        v-model="formReajuste.outroIndice"
+                    ></input-box>
+                    <p v-show="errosReajuste.indiceUtilizado" class="login-input-invalido">{{ errosReajuste.indiceUtilizado }}</p>
+                </div>
+
+                <div class="painel-modal-linha">
+                    <input-box
+                        label="Percentual de reajuste (%)"
+                        placeholder="Ex.: 4,5"
+                        v-model="formReajuste.percentual"
+                        :erro="errosReajuste.percentual"
+                    ></input-box>
+                </div>
+
+                <div class="perfil-dado" v-if="novoValorReajuste !== null">
+                    <small>Novo valor do aluguel</small>
+                    <span>{{ formatarValor(novoValorReajuste) }}</span>
+                </div>
+
+                <p v-show="errosReajuste.geral" class="login-input-invalido">{{ errosReajuste.geral }}</p>
+
+                <div class="painel-modal-botoes">
+                    <button type="button" class="pesquisa-limpar" @click="fecharModal">Cancelar</button>
+                    <button type="submit" class="submit-login" :disabled="enviando">
+                        <i class="ph ph-money icone-pesquisa"></i>
+                        <span>{{ enviando ? 'Salvando...' : 'Confirmar reajuste' }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <barra-inferior></barra-inferior>
+    </div>
+
+<script type="module" th:inline="none">
+
+import { createApp, ref, computed, onMounted } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+import BarraSuperior from '/components/BarraSuperior.js'
+import BarraInferior from '/components/BarraInferior.js'
+import InputBox from '/components/InputBox.js'
+
+createApp({
+components: {
+    BarraSuperior,
+    BarraInferior,
+    InputBox
+},
+setup() {
+
+    const STATUS_VENDA = 'disponível para venda'
+    const STATUS_LOCACAO = 'disponível para locação'
+    const STATUS_INDISPONIVEL = 'indisponível'
+
+    const statusCadastro = [
+        { id: 0, valor: STATUS_VENDA, rotulo: 'Disponível para venda' },
+        { id: 1, valor: STATUS_LOCACAO, rotulo: 'Disponível para locação' },
+        { id: 2, valor: STATUS_INDISPONIVEL, rotulo: 'Indisponível' }
+    ]
+
+    const FOTO_MAX_BYTES = 5 * 1024 * 1024
+    const DESCRICAO_FOTO_MAX = 20
+    const TITULO_MAX = 50
+    const DESCRICAO_IMOVEL_MAX = 150
+    const VALOR_MAX = 9_999_999_999_999.99
+
+    const visitas = ref([])
+    const contratos = ref([])
+    const imoveis = ref([])
+    const tiposImoveis = ref([])
+    const carregando = ref({ visitas: true, contratos: true, imoveis: true })
+    const erro = ref('')
+    const sucesso = ref('')
+    const enviando = ref(false)
+
+    const contratosVenda = computed(() => contratos.value.filter(c => c.tipo === 'VENDA'))
+    const contratosLocacao = computed(() => contratos.value.filter(c => c.tipo === 'LOCACAO'))
+
+    const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+    const pad = (n) => String(n).padStart(2, '0')
+
+    const normalizarData = (d) => Array.isArray(d) ? `${d[0]}-${pad(d[1])}-${pad(d[2])}` : String(d).slice(0, 10)
+    const formatarData = (d) => {
+        const [a, m, dia] = normalizarData(d).split('-')
+        return `${dia}/${m}/${a}`
+    }
+    const formatarHorario = (h) => Array.isArray(h) ? `${pad(h[0])}:${pad(h[1])}` : String(h).slice(0, 5)
+    const formatarValor = (v) => v != null ? formatadorMoeda.format(v) : '—'
+
+    function lerValor(texto) {
+        const t = String(texto ?? '').trim().replace(/[^\d.,]/g, '')
+        if (t === '') return null
+        const pontoMilhar = /^\d{1,3}(\.\d{3})+$/.test(t)
+        const normal = t.includes(',') ? t.replace(/\./g, '').replace(',', '.')
+            : pontoMilhar ? t.replace(/\./g, '') : t
+        const n = Number(normal)
+        return Number.isFinite(n) ? n : NaN
+    }
+
+    function lerInteiro(texto) {
+        const t = String(texto ?? '').trim()
+        if (t === '') return null
+        return /^\d+$/.test(t) ? Number(t) : NaN
+    }
+
+    const rotuloStatus = (s) => ({
+        [STATUS_VENDA]: 'Disponível para venda',
+        [STATUS_LOCACAO]: 'Disponível para locação',
+        [STATUS_INDISPONIVEL]: 'Indisponível',
+        'vendido': 'Vendido',
+        'alugado': 'Alugado'
+    }[s] ?? s)
+
+    const classeStatus = (s) => s === STATUS_VENDA ? 'pesquisa-card-tag-venda'
+        : s === STATUS_LOCACAO ? 'pesquisa-card-tag-locacao' : ''
+
+    const podePublicar = (i) => i.status === STATUS_VENDA || i.status === STATUS_LOCACAO
+
+    async function lerErrosBrutos(response) {
+        try {
+            return await response.json()
+        } catch {
+            return { geral: 'Ocorreu um erro inesperado. Tente novamente mais tarde.' }
+        }
+    }
+
+    function agrupar(brutos, traduzir, camposVisiveis) {
+        const erros = {}
+        for (const [chave, mensagem] of Object.entries(brutos)) {
+            const destino = traduzir(chave)
+            const final = camposVisiveis.test(destino) ? destino : 'geral'
+            if (!erros[final]) erros[final] = mensagem
+            else if (final === 'geral') erros.geral += ' ' + mensagem
+        }
+        return erros
+    }
+
+    async function buscar(url) {
+        const resposta = await fetch(url)
+        if (resposta.status === 401) {
+            window.location.href = '/login'
+            return null
+        }
+        if (!resposta.ok) {
+            const corpo = await lerErrosBrutos(resposta)
+            throw new Error(corpo.geral || 'Não foi possível carregar os dados.')
+        }
+        return resposta.json()
+    }
+
+    async function carregar(chave, url, destino) {
+        carregando.value[chave] = true
+        try {
+            const dados = await buscar(url)
+            if (dados) destino.value = dados
+        } catch (e) {
+            console.error(e)
+            erro.value = e.message || 'Servidor indisponível. Verifique sua conexão e tente novamente.'
+        } finally {
+            carregando.value[chave] = false
+        }
+    }
+
+    const carregarVisitas = () => carregar('visitas', '/api/painel/proprietario/visitas', visitas)
+    const carregarContratos = () => carregar('contratos', '/api/painel/proprietario/contratos', contratos)
+    const carregarImoveis = () => carregar('imoveis', '/api/painel/proprietario/imoveis', imoveis)
+
+    async function carregarTipos() {
+        try {
+            const resposta = await fetch('/api/imoveis/tipos')
+            if (resposta.ok) tiposImoveis.value = await resposta.json()
+        } catch (e) {
+            console.error('Erro ao carregar os tipos de imóvel:', e)
+        }
+    }
+
+    function dadosImovel(i) {
+        const itens = []
+        const add = (rotulo, valor) => {
+            if (valor !== null && valor !== undefined && valor !== '') itens.push({ rotulo, valor })
+        }
+        add(i.status === STATUS_LOCACAO ? 'Aluguel mensal' : 'Valor', formatarValor(i.valor))
+        add('Área total', i.areaTotal != null ? Number(i.areaTotal).toLocaleString('pt-BR', { maximumFractionDigits: 2 }) + ' m²' : null)
+        add('Dormitórios', i.qtdDormitorios)
+        add('Banheiros', i.qtdBanheiros)
+        add('Vagas', i.qtdVagas)
+        add('Ano de construção', i.anoConstrucao)
+        add('Descrição', i.descricao)
+        return itens
+    }
+
+    const rotuloGarantia = (g) => ({
+        'FIADOR': 'Fiador',
+        'DEPOSITO CAUCAO': 'Depósito caução',
+        'SEGURO FIANCA': 'Seguro fiança'
+    }[g] ?? g)
+
+    function dadosContrato(c) {
+        const itens = []
+        const add = (rotulo, valor) => {
+            if (valor !== null && valor !== undefined && valor !== '') itens.push({ rotulo, valor })
+        }
+
+        add('Cliente', c.cliente)
+        add(c.tipo === 'VENDA' ? 'Data da venda' : 'Início da locação', formatarData(c.data))
+        add(c.tipo === 'VENDA' ? 'Valor da venda' : 'Valor do aluguel', formatarValor(c.valor))
+
+        if (c.tipo === 'LOCACAO') {
+            add('Garantia', rotuloGarantia(c.garantia))
+            if (c.valorCaucao != null) add('Depósito caução', formatarValor(c.valorCaucao))
+            if (c.prazoMeses != null) add('Duração', c.prazoMeses + (c.prazoMeses === 1 ? ' mês' : ' meses'))
+            if (c.diaVencimento != null) add('Dia de vencimento', 'Dia ' + c.diaVencimento)
+            if (c.dataRescisao) {
+                add('Data da rescisão', formatarData(c.dataRescisao))
+                if (c.multa != null) add('Multa de rescisão', formatarValor(c.multa))
+                add('Motivo da rescisão', c.motivo)
+            }
+        } else {
+            if (c.valorSinal != null) add('Valor do sinal', formatarValor(c.valorSinal))
+            add('Forma de pagamento', c.formaPagamento)
+            if (c.valorFinanciado != null) add('Valor financiado', formatarValor(c.valorFinanciado))
+        }
+        return itens
+    }
+
+    const modal = ref(null)
+
+    function fecharModal() {
+        modal.value = null
+    }
+
+    const novoFormImovel = () => ({
+        tipo: null,
+        status: '',
+        areaTotal: '',
+        valor: '',
+        anoConstrucao: '',
+        qtdDormitorios: '',
+        qtdBanheiros: '',
+        qtdVagas: '',
+        descricao: '',
+        endereco: { rua: '', numero: '', bairro: '', complemento: '', cidade: '', estado: '', cep: '' }
+    })
+
+    const formImovel = ref(novoFormImovel())
+    const errosImovel = ref({})
+
+    let enderecoGravado = null
+
+    function abrirImovel() {
+        sucesso.value = ''
+        formImovel.value = novoFormImovel()
+        errosImovel.value = {}
+        enderecoGravado = null
+        modal.value = 'imovel'
+    }
+
+    function validarImovel(f) {
+        const erros = {}
+        const obrigatorio = 'Campo obrigatório'
+        const anoMax = new Date().getFullYear() + 5
+
+        if (f.tipo === null) erros.tipo = 'Selecione o tipo do imóvel'
+        if (!f.status) erros.status = 'Selecione a situação do imóvel'
+
+        const area = lerValor(f.areaTotal)
+        if (area == null) erros.areaTotal = obrigatorio
+        else if (Number.isNaN(area) || area <= 0) erros.areaTotal = 'Informe uma área maior que zero'
+
+        const valor = lerValor(f.valor)
+        if (valor == null) erros.valor = obrigatorio
+        else if (Number.isNaN(valor) || valor <= 0) erros.valor = 'Informe um valor maior que zero'
+        else if (valor > VALOR_MAX) erros.valor = 'O valor informado é muito alto'
+
+        const ano = lerInteiro(f.anoConstrucao)
+        if (ano == null) erros.anoConstrucao = obrigatorio
+        else if (Number.isNaN(ano) || ano < 1800 || ano > anoMax) erros.anoConstrucao = `Informe um ano entre 1800 e ${anoMax}`
+
+        for (const [campo, rotulo] of [['qtdDormitorios', 'dormitórios'], ['qtdBanheiros', 'banheiros'], ['qtdVagas', 'vagas']]) {
+            const n = lerInteiro(f[campo])
+            if (n == null) erros[campo] = obrigatorio
+            else if (Number.isNaN(n) || n > 999) erros[campo] = `Informe a quantidade de ${rotulo} (0 ou mais)`
+        }
+
+        const descricao = f.descricao.trim()
+        if (!descricao) erros.descricao = obrigatorio
+        else if (descricao.length > DESCRICAO_IMOVEL_MAX) erros.descricao = `A descrição deve ter no máximo ${DESCRICAO_IMOVEL_MAX} caracteres`
+
+        const e = f.endereco
+        const textos = [['rua', 50], ['bairro', 30], ['cidade', 30]]
+        for (const [campo, max] of textos) {
+            const t = e[campo].trim()
+            if (!t) erros[`endereco.${campo}`] = obrigatorio
+            else if (t.length > max) erros[`endereco.${campo}`] = `Use no máximo ${max} caracteres`
+        }
+        const numero = lerInteiro(e.numero)
+        if (numero == null) erros['endereco.numero'] = obrigatorio
+        else if (Number.isNaN(numero) || numero < 1 || numero > 999999) erros['endereco.numero'] = 'Informe um número válido'
+        if (e.complemento.trim().length > 10) erros['endereco.complemento'] = 'Use no máximo 10 caracteres'
+        if (!/^[A-Za-z]{2}$/.test(e.estado.trim())) erros['endereco.estado'] = e.estado.trim() ? 'Use a sigla do estado com 2 letras' : obrigatorio
+        const cep = e.cep.replace(/\D/g, '')
+        if (!e.cep.trim()) erros['endereco.cep'] = obrigatorio
+        else if (cep.length !== 8) erros['endereco.cep'] = 'O CEP deve conter exatamente 8 números'
+
+        return erros
+    }
+
+    const CHAVES_IMOVEL = /^(tipo|status|areaTotal|valor|anoConstrucao|qtdDormitorios|qtdBanheiros|qtdVagas|descricao|geral|endereco\.\w+)$/
+
+    async function enviarImovel() {
+        const f = formImovel.value
+        const erros = validarImovel(f)
+        errosImovel.value = erros
+        if (Object.keys(erros).length > 0) return
+
+        enviando.value = true
+        try {
+            const endereco = {
+                cep: f.endereco.cep.replace(/\D/g, ''),
+                estado: f.endereco.estado.trim(),
+                cidade: f.endereco.cidade.trim(),
+                bairro: f.endereco.bairro.trim(),
+                rua: f.endereco.rua.trim(),
+                numero: parseInt(f.endereco.numero),
+                complemento: f.endereco.complemento
+            }
+
+            const assinatura = JSON.stringify(endereco)
+            if (!enderecoGravado || enderecoGravado.assinatura !== assinatura) {
+                const resEndereco = await fetch('/api/enderecos', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(endereco)
+                })
+                if (resEndereco.status === 401) { window.location.href = '/login'; return }
+                if (!resEndereco.ok) {
+                    errosImovel.value = agrupar(await lerErrosBrutos(resEndereco), (c) => c === 'geral' ? c : 'endereco.' + c, CHAVES_IMOVEL)
+                    return
+                }
+                const salvo = await resEndereco.json()
+                enderecoGravado = { assinatura, idEndereco: salvo.idEndereco }
+            }
+
+            const payload = {
+                tipo: f.tipo,
+                endereco: { idEndereco: enderecoGravado.idEndereco },
+                areaTotal: lerValor(f.areaTotal),
+                qtdDormitorios: lerInteiro(f.qtdDormitorios),
+                qtdBanheiros: lerInteiro(f.qtdBanheiros),
+                qtdVagas: lerInteiro(f.qtdVagas),
+                anoConstrucao: lerInteiro(f.anoConstrucao),
+                descricao: f.descricao.trim(),
+                valor: lerValor(f.valor),
+                status: f.status
+            }
+
+            const resposta = await fetch('/api/painel/proprietario/imoveis', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            if (resposta.status === 401) { window.location.href = '/login'; return }
+            if (!resposta.ok) {
+                errosImovel.value = agrupar(await lerErrosBrutos(resposta), (c) => c.replace(/^imovel\./, ''), CHAVES_IMOVEL)
+                return
+            }
+
+            fecharModal()
+            sucesso.value = 'Imóvel cadastrado com sucesso. Agora você já pode criar uma publicação para ele.'
+            await carregarImoveis()
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            errosImovel.value = { geral: 'Servidor indisponível. Verifique sua conexão e tente novamente.' }
+        } finally {
+            enviando.value = false
+        }
+    }
+
+    const novoFormPub = () => ({ idImovel: null, titulo: '', fotos: [], capaUid: null })
+    const formPub = ref(novoFormPub())
+    const errosPub = ref({})
+    let proximaFoto = 0
+
+    function motivoIndisponivel(i) {
+        if (i.idPublicacaoAtiva) return 'Este imóvel já possui uma publicação ativa.'
+        if (!podePublicar(i)) return 'Só é possível publicar imóveis disponíveis para venda ou locação.'
+        return ''
+    }
+
+    const imovelEscolhido = computed(() => imoveis.value.find(i => i.idImovel === formPub.value.idImovel) ?? null)
+
+    const tipoPublicacaoEscolhido = computed(() => {
+        const i = imovelEscolhido.value
+        if (!i) return ''
+        return i.status === STATUS_VENDA ? 'V' : i.status === STATUS_LOCACAO ? 'L' : ''
+    })
+
+    function abrirPublicacao(idImovel = null) {
+        sucesso.value = ''
+        formPub.value = novoFormPub()
+        const escolhido = imoveis.value.find(i => i.idImovel === idImovel)
+        if (escolhido && !motivoIndisponivel(escolhido)) formPub.value.idImovel = idImovel
+        errosPub.value = {}
+        modal.value = 'publicacao'
+    }
+
+    const ehJpeg = (arquivo) => /\.(jpe?g)$/i.test(arquivo.name) && arquivo.type === 'image/jpeg'
+
+    function lerArquivo(arquivo) {
+        return new Promise((resolve, reject) => {
+            const leitor = new FileReader()
+            leitor.onload = () => resolve(String(leitor.result))
+            leitor.onerror = () => reject(leitor.error)
+            leitor.readAsDataURL(arquivo)
+        })
+    }
+
+    async function adicionarFotos(evento) {
+        const arquivos = Array.from(evento.target.files ?? [])
+        evento.target.value = ''
+
+        const recusados = []
+        for (const arquivo of arquivos) {
+            if (!ehJpeg(arquivo)) {
+                recusados.push(`${arquivo.name} (só JPG/JPEG)`)
+                continue
+            }
+            if (arquivo.size > FOTO_MAX_BYTES) {
+                recusados.push(`${arquivo.name} (acima de 5 MB)`)
+                continue
+            }
+            try {
+                const dataUrl = await lerArquivo(arquivo)
+                const foto = {
+                    uid: ++proximaFoto,
+                    nome: arquivo.name,
+                    descricao: '',
+                    previa: dataUrl,
+                    base64: dataUrl.split(',')[1] ?? ''
+                }
+                formPub.value.fotos.push(foto)
+                if (formPub.value.capaUid === null) formPub.value.capaUid = foto.uid
+            } catch (e) {
+                console.error('Não foi possível ler ' + arquivo.name, e)
+                recusados.push(`${arquivo.name} (não foi possível ler)`)
+            }
+        }
+
+        const restante = { ...errosPub.value, fotos: '', indiceCapa: '' }
+        if (recusados.length > 0) restante.fotos = 'Arquivos não adicionados: ' + recusados.join('; ') + '.'
+        errosPub.value = restante
+    }
+
+    function removerFoto(uid) {
+        const fotos = formPub.value.fotos
+        const posicao = fotos.findIndex(f => f.uid === uid)
+        if (posicao < 0) return
+        fotos.splice(posicao, 1)
+        if (formPub.value.capaUid === uid) formPub.value.capaUid = fotos.length > 0 ? fotos[0].uid : null
+    }
+
+    function validarPublicacao(f) {
+        const erros = {}
+        const obrigatorio = 'Campo obrigatório'
+
+        if (f.idImovel === null) erros.idImovel = 'Selecione o imóvel que será publicado'
+
+        const titulo = f.titulo.trim()
+        if (!titulo) erros.titulo = obrigatorio
+        else if (titulo.length > TITULO_MAX) erros.titulo = `O título deve ter no máximo ${TITULO_MAX} caracteres`
+
+        if (f.fotos.length === 0) erros.fotos = 'Adicione pelo menos uma foto'
+        f.fotos.forEach((foto, i) => {
+            const d = foto.descricao.trim()
+            if (!d) erros[`fotos[${i}]`] = obrigatorio
+            else if (d.length > DESCRICAO_FOTO_MAX) erros[`fotos[${i}]`] = `Use no máximo ${DESCRICAO_FOTO_MAX} caracteres`
+        })
+        if (f.fotos.length > 0 && !f.fotos.some(foto => foto.uid === f.capaUid)) erros.indiceCapa = 'Indique qual foto será a capa'
+
+        return erros
+    }
+
+    const CHAVES_PUB = /^(idImovel|titulo|tipoPublicacao|fotos|indiceCapa|fotos\[\d+\]|geral)$/
+
+    const traduzirErroPub = (c) => c.replace(/^(fotos\[\d+\])\..*$/, '$1')
+
+    async function enviarPublicacao() {
+        const f = formPub.value
+        const erros = validarPublicacao(f)
+        errosPub.value = erros
+        if (Object.keys(erros).length > 0) return
+
+        const payload = {
+            idImovel: f.idImovel,
+            titulo: f.titulo.trim(),
+            tipoPublicacao: tipoPublicacaoEscolhido.value,
+            indiceCapa: f.fotos.findIndex(foto => foto.uid === f.capaUid),
+            fotos: f.fotos.map(foto => ({ imagem: foto.base64, tipo: foto.descricao.trim() }))
+        }
+
+        enviando.value = true
+        try {
+            const resposta = await fetch('/api/painel/proprietario/publicacoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            if (resposta.status === 401) { window.location.href = '/login'; return }
+            if (!resposta.ok) {
+                errosPub.value = agrupar(await lerErrosBrutos(resposta), traduzirErroPub, CHAVES_PUB)
+                return
+            }
+
+            fecharModal()
+            sucesso.value = 'Publicação criada com sucesso.'
+            await carregarImoveis()
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            errosPub.value = { geral: 'Servidor indisponível. Verifique sua conexão e tente novamente.' }
+        } finally {
+            enviando.value = false
+        }
+    }
+
+    const indicesReajuste = [
+        { id: 'IGPM', rotulo: 'IGP-M' },
+        { id: 'IPCA', rotulo: 'IPCA' },
+        { id: 'OUTRO', rotulo: 'Outro' }
+    ]
+    const INDICE_MAX = 10
+
+    const hojeIso = () => {
+        const d = new Date()
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    }
+
+    const contratoReajuste = ref(null)
+    const formReajuste = ref({ indice: '', outroIndice: '', percentual: ''})
+    const errosReajuste = ref({})
+
+    const podeReajustar = (c) => !c.status || String(c.status).toUpperCase() === 'ATIVO'
+
+    function abrirReajuste(c) {
+        if (!podeReajustar(c)) return
+        sucesso.value = ''
+        contratoReajuste.value = c
+        formReajuste.value = { indice: '', outroIndice: '', percentual: '' }
+        errosReajuste.value = {}
+        modal.value = 'reajuste'
+    }
+
+    const novoValorReajuste = computed(() => {
+        const c = contratoReajuste.value
+        if (!c || c.valor == null) return null
+        const p = lerValor(formReajuste.value.percentual)
+        if (p == null || Number.isNaN(p) || p <= 0) return null
+        return Math.round(c.valor * (1 + p / 100) * 100) / 100
+    })
+
+    function validarReajuste(f) {
+        const erros = {}
+        const obrigatorio = 'Campo obrigatório'
+
+        if (!f.indice) {
+            erros.indiceUtilizado = 'Selecione o índice utilizado'
+        } else if (f.indice === 'OUTRO') {
+            const outro = f.outroIndice.trim()
+            if (!outro) erros.indiceUtilizado = 'Informe o nome do índice'
+            else if (outro.length > INDICE_MAX) erros.indiceUtilizado = `Use no máximo ${INDICE_MAX} caracteres`
+        }
+
+        const p = lerValor(f.percentual)
+        if (p == null) erros.percentual = obrigatorio
+        else if (Number.isNaN(p) || p <= 0) erros.percentual = 'Informe um percentual maior que zero'
+        else if (novoValorReajuste.value > VALOR_MAX) erros.percentual = 'O valor resultante é muito alto'
+
+        return erros
+    }
+
+    const CHAVES_REAJUSTE = /^(indiceUtilizado|percentual|geral)$/
+
+    async function enviarReajuste() {
+        const c = contratoReajuste.value
+        const f = formReajuste.value
+        const erros = validarReajuste(f)
+        errosReajuste.value = erros
+        if (Object.keys(erros).length > 0) return
+
+        const novoValor = novoValorReajuste.value
+
+        enviando.value = true
+        try {
+            const resposta = await fetch(`/api/painel/proprietario/contratos/${c.id}/reajustes`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    indiceUtilizado: f.indice === 'OUTRO' ? f.outroIndice.trim().toUpperCase() : f.indice,
+                    novoValor
+                })
+            })
+            if (resposta.status === 401) { window.location.href = '/login'; return }
+            if (!resposta.ok) {
+                errosReajuste.value = agrupar(await lerErrosBrutos(resposta),
+                    (chave) => chave === 'novoValor' ? 'percentual' : chave, CHAVES_REAJUSTE)
+                return
+            }
+
+            fecharModal()
+            sucesso.value = `Aluguel reajustado para ${formatarValor(novoValor)}.`
+            await carregarContratos()
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            errosReajuste.value = { geral: 'Servidor indisponível. Verifique sua conexão e tente novamente.' }
+        } finally {
+            enviando.value = false
+        }
+    }
+
+    onMounted(() => {
+        carregarVisitas()
+        carregarContratos()
+        carregarImoveis()
+        carregarTipos()
+    })
+
+    return {
+        visitas, contratosVenda, contratosLocacao, imoveis, tiposImoveis, carregando, erro, sucesso, enviando,
+        statusCadastro, modal, fecharModal,
+        formImovel, errosImovel, abrirImovel, enviarImovel,
+        formPub, errosPub, tipoPublicacaoEscolhido, abrirPublicacao, adicionarFotos, removerFoto, enviarPublicacao,
+        motivoIndisponivel, podePublicar,
+        dadosContrato, dadosImovel, rotuloStatus, classeStatus,
+        indicesReajuste, contratoReajuste, formReajuste, errosReajuste, novoValorReajuste,
+        podeReajustar, abrirReajuste, enviarReajuste,
+        formatarData, formatarHorario, formatarValor
+    }
+
+}
+}).mount('#app-painel-proprietario');
+</script>
+</body>
+</html>

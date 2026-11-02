@@ -162,6 +162,25 @@ CREATE TABLE Visita_Agendada (
     FOREIGN KEY (id_imovel) REFERENCES Imovel (id_imovel)
 );
 
+CREATE TABLE Fiador (
+    id_fiador SERIAL,
+    cpf TIPO_CPF NOT NULL UNIQUE,
+    nome VARCHAR(50) NOT NULL,
+    id_endereco INT NOT NULL,
+    comprovante_renda BYTEA NOT NULL,
+    PRIMARY KEY (id_fiador),
+    FOREIGN KEY (id_endereco) REFERENCES Endereco (id_endereco)
+);
+
+CREATE TABLE TelefoneFiador (
+    id_telefone SERIAL NOT NULL,
+    telefone VARCHAR(13) NOT NULL,
+    id_fiador INT NOT NULL,
+    PRIMARY KEY (id_telefone),
+    FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador),
+    UNIQUE (telefone, id_fiador)
+);
+
 CREATE TABLE Contrato_Venda (
     id_venda SERIAL,
     data DATE NOT NULL DEFAULT CURRENT_DATE,
@@ -231,28 +250,9 @@ CREATE TABLE Contrato_Locacao (
     FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador)
 );
 
-CREATE TABLE Fiador (
-    id_fiador SERIAL,
-    cpf TIPO_CPF NOT NULL UNIQUE,
-    nome VARCHAR(50) NOT NULL,
-    id_endereco INT NOT NULL,
-    comprovante_renda BYTEA NOT NULL,
-    PRIMARY KEY (id_fiador),
-    FOREIGN KEY (id_endereco) REFERENCES Endereco (id_endereco)
-);
-
-CREATE TABLE TelefoneFiador (
-    id_telefone SERIAL NOT NULL,
-    telefone VARCHAR(13) NOT NULL,
-    id_fiador INT NOT NULL,
-    PRIMARY KEY (id_telefone),
-    FOREIGN KEY (id_fiador) REFERENCES Fiador (id_fiador),
-    UNIQUE (telefone, id_fiador)
-);
-
 CREATE TABLE Reajuste_Aluguel (
     id_reajuste SERIAL,
-    data DATE NOT NULL,
+    data DATE NOT NULL DEFAULT CURRENT_DATE,
     novo_valor TIPO_VALOR NOT NULL,
     indice_utilizado VARCHAR(10) NOT NULL, -- como "IGPM" ou "IPCA"
     id_locacao INT NOT NULL,

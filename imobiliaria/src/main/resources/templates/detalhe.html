@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Imobiliária | Publicação</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div id="app-detalhe">
+        <barra-superior></barra-superior>
+
+        <div class="box-cadastro-titulo">
+            <h1 class="cadastro-titulo">{{ pub ? pub.titulo : 'Detalhes da publicação' }}</h1>
+        </div>
+
+        <p class="detalhe-aviso" v-if="carregando">Carregando...</p>
+        <p class="detalhe-aviso login-input-invalido" v-else-if="erro">{{ erro }}</p>
+
+        <div class="area-detalhe" v-if="pub">
+
+            <!-- COLUNA PRINCIPAL -->
+            <div class="detalhe-principal">
+
+                <div class="detalhe-bloco">
+                    <div class="pesquisa-card-tags">
+                        <span class="pesquisa-card-tag" :class="pub.tipoPublicacao === 'V' ? 'pesquisa-card-tag-venda' : 'pesquisa-card-tag-locacao'">
+                            {{ pub.tipoPublicacao === 'V' ? 'Venda' : 'Locação' }}
+                        </span>
+                        <span class="pesquisa-card-tag">{{ pub.tipoImovel }}</span>
+                    </div>
+                    <p class="pesquisa-card-preco detalhe-preco">
+                        {{ formatarPreco(pub.valor) }}<span v-if="pub.tipoPublicacao !== 'V'" class="detalhe-preco-sufixo"> / mês</span>
+                    </p>
+                    <p class="pesquisa-card-endereco">
+                        <i class="ph ph-map-pin"></i>
+                        {{ enderecoCompleto }}
+                    </p>
+                    <p class="detalhe-meta">
+                        <i class="ph ph-calendar-blank"></i> Publicado em {{ formatarData(pub.data) }}
+                        &nbsp;·&nbsp;
+                        <i class="ph ph-eye"></i> {{ pub.acessos }} {{ pub.acessos === 1 ? 'acesso' : 'acessos' }}
+                    </p>
+                </div>
+
+                <div class="detalhe-bloco">
+                    <h2 class="cadastro-label detalhe-subtitulo">Galeria de fotos</h2>
+                    <p class="pesquisa-contagem" v-if="idsFotos.length === 0">Este imóvel ainda não possui fotos.</p>
+                    <div class="galeria-grade" v-else>
+                        <foto-lazy
+                            v-for="idFoto in idsFotos"
+                            :key="idFoto"
+                            :id-foto="idFoto"
+                            :titulo="pub.titulo"
+                            @abrir="fotoAberta = $event"
+                        ></foto-lazy>
+                    </div>
+                </div>
+
+                <div class="detalhe-bloco">
+                    <h2 class="cadastro-label detalhe-subtitulo">Características</h2>
+                    <div class="detalhe-caracteristicas">
+                        <div class="detalhe-carac"><i class="ph ph-ruler"></i><span>{{ pub.imovel.areaTotal }} m²</span><small>Área total</small></div>
+                        <div class="detalhe-carac"><i class="ph ph-bed"></i><span>{{ pub.imovel.qtdDormitorios }}</span><small>Dormitórios</small></div>
+                        <div class="detalhe-carac"><i class="ph ph-bathtub"></i><span>{{ pub.imovel.qtdBanheiros }}</span><small>Banheiros</small></div>
+                        <div class="detalhe-carac"><i class="ph ph-car"></i><span>{{ pub.imovel.qtdVagas }}</span><small>Vagas</small></div>
+                        <div class="detalhe-carac"><i class="ph ph-hammer"></i><span>{{ pub.imovel.anoConstrucao }}</span><small>Ano de construção</small></div>
+                        <div class="detalhe-carac"><i class="ph ph-info"></i><span>{{ pub.imovel.status.toLocaleUpperCase() }}</span><small>Situação</small></div>
+                    </div>
+                </div>
+
+                <div class="detalhe-bloco">
+                    <h2 class="cadastro-label detalhe-subtitulo">Descrição</h2>
+                    <p class="detalhe-descricao">{{ pub.imovel.descricao }}</p>
+                </div>
+
+                <div class="detalhe-bloco">
+                    <h2 class="cadastro-label detalhe-subtitulo">Proprietário</h2>
+                    <p class="detalhe-linha"><i class="ph ph-user"></i> {{ pub.nomeProprietario }}</p>
+                    <p class="detalhe-linha"><i class="ph ph-envelope-simple"></i> {{ pub.emailProprietario }}</p>
+                    <p class="detalhe-linha" v-for="t in pub.telefonesProprietario" :key="t"><i class="ph ph-phone"></i> {{ t }}</p>
+                </div>
+            </div>
+
+            <form class="pesquisa-filtro detalhe-agenda" @submit.prevent="agendar" v-if="isCliente">
+                <label class="cadastro-label">Agendar visita</label>
+
+                <div class="calendario">
+                    <div class="calendario-topo">
+                        <button type="button" class="calendario-nav" @click="mudarMes(-1)" :disabled="!podeVoltar" aria-label="Mês anterior">
+                            <i class="ph ph-caret-left"></i>
+                        </button>
+                        <span class="calendario-mes">{{ tituloMes }}</span>
+                        <button type="button" class="calendario-nav" @click="mudarMes(1)" aria-label="Próximo mês">
+                            <i class="ph ph-caret-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="calendario-grade">
+                        <span class="calendario-semana" v-for="s in diasSemana" :key="s">{{ s }}</span>
+
+                        <span v-for="n in diasVaziosInicio" :key="'v' + n"></span>
+
+                        <button
+                            type="button"
+                            v-for="dia in diasDoMes"
+                            :key="dia.iso"
+                            class="calendario-dia"
+                            :class="{
+                                'calendario-dia-visita': dia.temVisita,
+                                'calendario-dia-selecionado': dia.iso === diaSelecionado,
+                                'calendario-dia-hoje': dia.hoje
+                            }"
+                            :disabled="dia.passado"
+                            @click="selecionarDia(dia.iso)"
+                        >{{ dia.numero }}</button>
+                    </div>
+
+                    <p class="pesquisa-dica calendario-legenda">
+                        <span class="calendario-ponto"></span> Dia com visita(s) agendada(s)
+                    </p>
+                </div>
+
+                <div class="pesquisa-filtro-grupo" v-if="diaSelecionado">
+                    <label class="cadastro-label">Horário em {{ formatarData(diaSelecionado) }}</label>
+                    <div class="horarios-grade">
+                        <button
+                            type="button"
+                            v-for="h in horarios"
+                            :key="h.hora"
+                            class="horario-botao"
+                            :class="{ 'horario-botao-ativo': h.hora === horaSelecionada }"
+                            :disabled="h.indisponivel"
+                            :title="h.ocupado ? 'Horário já agendado' : ''"
+                            @click="horaSelecionada = h.hora"
+                        >{{ h.hora }}</button>
+                    </div>
+                </div>
+                <p class="pesquisa-dica" v-else>Selecione um dia no calendário para escolher o horário.</p>
+
+                <p v-show="erroAgenda" class="login-input-invalido">{{ erroAgenda }}</p>
+                <p v-show="sucessoAgenda" class="detalhe-sucesso">{{ sucessoAgenda }}</p>
+
+                <button type="submit" class="submit-login" :disabled="!diaSelecionado || !horaSelecionada || enviando">
+                    <i class="ph ph-calendar-check icone-pesquisa"></i>
+                    <span>{{ enviando ? 'Agendando...' : 'Agendar visita' }}</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="lightbox" v-if="fotoAberta !== null" @click="fotoAberta = null">
+            <button type="button" class="lightbox-fechar" aria-label="Fechar"><i class="ph ph-x"></i></button>
+            <figure class="lightbox-figura" @click.stop>
+                <img :src="'data:image/jpeg;base64,' + fotoAberta.imagem" :alt="fotoAberta.tipo || 'Foto de ' + pub.titulo">
+                <figcaption class="lightbox-legenda" v-if="fotoAberta.tipo">{{ fotoAberta.tipo }}</figcaption>
+            </figure>
+        </div>
+
+        <barra-inferior></barra-inferior>
+    </div>
+
+<script type="module" th:inline="none">
+
+import { createApp, ref, computed, onMounted, onBeforeUnmount } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+import BarraSuperior from '/components/BarraSuperior.js'
+import BarraInferior from '/components/BarraInferior.js'
+
+const FotoLazy = {
+    props: ['idFoto', 'titulo'],
+    emits: ['abrir'],
+    setup(props) {
+        const raiz = ref(null)
+        const dados = ref(null)
+        const falhou = ref(false)
+        let observador = null
+ 
+        async function carregar() {
+            try {
+                const resposta = await fetch('/api/fotos/' + props.idFoto)
+                if (resposta.ok) dados.value = await resposta.json()
+                else falhou.value = true
+            } catch (e) {
+                console.error('Falha ao carregar foto ' + props.idFoto + ':', e)
+                falhou.value = true
+            }
+        }
+ 
+        onMounted(() => {
+            if (!('IntersectionObserver' in window)) {
+                carregar()
+                return
+            }
+            observador = new IntersectionObserver((entradas) => {
+                if (entradas.some(e => e.isIntersecting)) {
+                    observador.disconnect()
+                    carregar()
+                }
+            }, { rootMargin: '100px' })
+            observador.observe(raiz.value)
+        })
+ 
+        onBeforeUnmount(() => observador && observador.disconnect())
+ 
+        return { raiz, dados, falhou }
+    },
+    template: `
+        <figure ref="raiz" class="galeria-figura">
+            <div class="galeria-item" :class="{ 'galeria-item-carregando': !dados && !falhou }" @click="dados && $emit('abrir', dados)">
+                <img v-if="dados" :src="'data:image/jpeg;base64,' + dados.imagem" :alt="dados.tipo || ('Foto de ' + titulo)">
+                <i v-else-if="falhou" class="ph ph-image galeria-erro"></i>
+            </div>
+            <figcaption class="galeria-legenda" v-if="dados && dados.tipo">{{ dados.tipo }}</figcaption>
+        </figure>
+    `
+}
+
+createApp({
+components: {
+    BarraSuperior,
+    BarraInferior,
+    FotoLazy
+},
+setup() {
+
+    const isCliente = ref(true)
+
+    const idPublicacao = window.location.pathname.split('/').filter(Boolean).pop()
+
+    const pub = ref(null)
+    const visitas = ref([])
+    const imovel = ref(null)
+    const endereco = ref(null)
+    const carregando = ref(true)
+    const erro = ref('')
+    const fotoAberta = ref(null)
+
+    // Agendamento
+    const diasSemana = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S']
+    const hoje = new Date()
+    const mesAtual = ref(new Date(hoje.getFullYear(), hoje.getMonth(), 1))
+    const diaSelecionado = ref('')
+    const horaSelecionada = ref('')
+    const erroAgenda = ref('')
+    const sucessoAgenda = ref('')
+    const enviando = ref(false)
+
+    const HORA_INICIO = 8
+    const HORA_FIM = 17 
+
+    const formatadorPreco = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+    const formatarPreco = (valor) => valor == null ? 'Preço não informado' : formatadorPreco.format(valor)
+
+    const pad = (n) => String(n).padStart(2, '0')
+    const paraIso = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+    const hojeIso = paraIso(hoje)
+
+    const normalizarData = (d) => Array.isArray(d) ? `${d[0]}-${pad(d[1])}-${pad(d[2])}` : String(d).slice(0, 10)
+    const normalizarHora = (h) => Array.isArray(h) ? `${pad(h[0])}:${pad(h[1])}` : String(h).slice(0, 5)
+
+    const formatarData = (d) => {
+        if (!d) return ''
+        const [a, m, dia] = normalizarData(d).split('-')
+        return `${dia}/${m}/${a}`
+    }
+
+    const idsFotos = computed(() => pub.value?.idsFotos || [])
+
+    const enderecoCompleto = computed(() => {
+        const p = pub.value?.endereco
+        if (!p) return ''
+        const partes = [`${p.rua}, ${p.numero}`]
+        if (p.complemento) partes.push(p.complemento)
+        partes.push(p.bairro, `${p.cidade} - ${p.estado}`)
+        return partes.join(', ')
+    })
+
+    // Mapa: dia (ISO) -> horários já agendados
+    const visitasPorDia = computed(() => {
+        const mapa = {}
+        for (const v of visitas.value) {
+            const dia = normalizarData(v.data)
+            if (!mapa[dia]) mapa[dia] = []
+            mapa[dia].push(normalizarHora(v.horario))
+        }
+        return mapa
+    })
+
+    const tituloMes = computed(() => {
+        const t = mesAtual.value.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+        return t.charAt(0).toUpperCase() + t.slice(1)
+    })
+
+    const diasVaziosInicio = computed(() => mesAtual.value.getDay())
+
+    const diasDoMes = computed(() => {
+        const ano = mesAtual.value.getFullYear()
+        const mes = mesAtual.value.getMonth()
+        const total = new Date(ano, mes + 1, 0).getDate()
+        const lista = []
+        for (let n = 1; n <= total; n++) {
+            const iso = paraIso(new Date(ano, mes, n))
+            lista.push({
+                numero: n,
+                iso,
+                hoje: iso === hojeIso,
+                passado: iso < hojeIso,
+                temVisita: !!visitasPorDia.value[iso]
+            })
+        }
+        return lista
+    })
+
+    const podeVoltar = computed(() =>
+        mesAtual.value.getFullYear() > hoje.getFullYear() ||
+        mesAtual.value.getMonth() > hoje.getMonth()
+    )
+
+    function mudarMes(delta) {
+        const m = mesAtual.value
+        mesAtual.value = new Date(m.getFullYear(), m.getMonth() + delta, 1)
+    }
+
+    const horarios = computed(() => {
+        const ocupados = visitasPorDia.value[diaSelecionado.value] || []
+        const agora = new Date()
+        const lista = []
+        for (let h = HORA_INICIO; h <= HORA_FIM; h++) {
+            const hora = `${pad(h)}:00`
+            const ocupado = ocupados.includes(hora)
+            const jaPassou = diaSelecionado.value === hojeIso && h <= agora.getHours()
+            lista.push({ hora, ocupado, indisponivel: ocupado || jaPassou })
+        }
+        return lista
+    })
+
+    function selecionarDia(iso) {
+        diaSelecionado.value = iso
+        horaSelecionada.value = ''
+        erroAgenda.value = ''
+        sucessoAgenda.value = ''
+    }
+
+    async function getDetalhe() {
+        try {
+            const resposta = await fetch('/api/publicacoes/id/' + idPublicacao)
+            if (!resposta.ok) {
+                erro.value = 'Publicação não encontrada.'
+                return
+            }
+
+            pub.value = await resposta.json()
+            console.log('Requisicao api realizada: \n' + pub)
+            document.title = 'Imobiliária | ' + pub.value.titulo
+
+            visitas.value = pub.value.visitas || [];
+
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            erro.value = 'Servidor indisponível. Verifique sua conexão e tente novamente.'
+        } finally {
+            carregando.value = false
+        }
+    }
+
+    async function getFotos(idImovel) {
+        try {
+            console.log('Requisicao api realizada: id = ' + idImovel)
+            const resposta = await fetch('/api/fotos/imovel/' + idImovel)
+            if (resposta.ok) idsFotos.value = await resposta.json()
+        } catch (e) {
+            console.error('Falha ao carregar fotos:', e)
+        }
+    }
+
+    async function agendar() {
+        erroAgenda.value = ''
+        sucessoAgenda.value = ''
+
+        if (localStorage.getItem('usuario') !== 'CLIENTE') {
+            erroAgenda.value = 'Faça login como cliente para agendar uma visita'
+            return
+        }
+
+        enviando.value = true
+        try {
+            const resposta = await fetch('/api/visitas', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    data: diaSelecionado.value,
+                    horario: horaSelecionada.value + ':00',
+                    imovel: {
+                        idImovel: pub.value.idImovel
+                    },
+                    cliente: {
+                        idCliente: Number(localStorage.getItem('id_usuario'))
+                    }
+                })
+            })
+
+            if (!resposta.ok) {
+                try {
+                    const corpo = await resposta.json()
+                    erroAgenda.value = corpo.geral || corpo.message || 'Não foi possível agendar a visita.'
+                } catch {
+                    erroAgenda.value = 'Não foi possível agendar a visita. Tente outro horário.'
+                }
+                return
+            }
+
+            sucessoAgenda.value = `Visita agendada para ${formatarData(diaSelecionado.value)} às ${horaSelecionada.value}.`
+            horaSelecionada.value = ''
+            
+            const respostaVisitas = await fetch('/api/visitas/imovel/' + pub.value.idImovel)
+
+            if (!respostaVisitas.ok) {
+                try {
+                    const corpo = await respostaVisitas.json()
+                    erroAgenda.value = corpo.geral || corpo.message || 'Não foi possível agendar a visita.'
+                } catch {
+                    erroAgenda.value = 'Não foi possível agendar a visita. Tente outro horário.'
+                }
+                return
+            }
+
+            visitas.value = await respostaVisitas.json()
+
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            erroAgenda.value = 'Servidor indisponível. Verifique sua conexão e tente novamente.'
+        } finally {
+            enviando.value = false
+        }
+    }
+
+    onMounted(() => {
+        getDetalhe()
+
+        isCliente.value = localStorage.getItem('usuario') === 'CLIENTE'
+    })
+
+    return {
+        isCliente, pub, idsFotos, carregando, erro, fotoAberta,
+        diasSemana, tituloMes, diasVaziosInicio, diasDoMes, podeVoltar, mudarMes,
+        diaSelecionado, horaSelecionada, horarios, selecionarDia,
+        erroAgenda, sucessoAgenda, enviando, agendar,
+        enderecoCompleto, formatarPreco, formatarData
+    }
+
+}
+}).mount('#app-detalhe');
+</script>
+</body>
+</html>

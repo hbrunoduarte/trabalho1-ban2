@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="pt-BR" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Imobiliária | Painel</title>
+    <link rel="stylesheet" th:href="@{/styles.css}">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+    <div id="app-painel-cliente">
+        <barra-superior></barra-superior>
+
+        <div class="box-cadastro-titulo">
+            <h1 class="cadastro-titulo">Painel do cliente</h1>
+        </div>
+
+        <p class="detalhe-aviso login-input-invalido" v-if="erro">{{ erro }}</p>
+
+        <div class="area-painel">
+
+            <p class="detalhe-sucesso" v-if="sucesso">{{ sucesso }}</p>
+
+            <!-- VISITAS AGENDADAS -->
+            <div class="detalhe-bloco">
+                <div class="painel-secao-topo">
+                    <h2 class="cadastro-label detalhe-subtitulo">Minhas visitas</h2>
+                </div>
+
+                <p class="detalhe-aviso" v-if="carregando.visitas">Carregando...</p>
+                <p class="pesquisa-dica" v-else-if="visitas.length === 0">
+                    Você não tem visitas agendadas. <a href="/busca">Procure um imóvel</a> e agende a sua.
+                </p>
+
+                <div class="painel-lista">
+                    <div class="painel-card" v-for="v in visitas" :key="v.idVisita">
+                        <div class="painel-card-info">
+                            <div class="pesquisa-card-tags" v-if="v.tipoContrato">
+                                <span class="pesquisa-card-tag" :class="v.tipoContrato === 'VENDA' ? 'pesquisa-card-tag-venda' : 'pesquisa-card-tag-locacao'">
+                                    {{ v.tipoContrato === 'VENDA' ? 'Venda' : 'Locação' }}
+                                </span>
+                            </div>
+                            <p class="detalhe-linha" v-if="v.endereco"><i class="ph ph-map-pin"></i> {{ v.endereco }}</p>
+                            <div class="perfil-dados">
+                                <div class="perfil-dado">
+                                    <small>Proprietário</small>
+                                    <span>{{ v.proprietario }}</span>
+                                </div>
+                                <div class="perfil-dado">
+                                    <small>Data da visita</small>
+                                    <span>{{ formatarData(v.data) }}<template v-if="v.horario"> às {{ formatarHorario(v.horario) }}</template></span>
+                                </div>
+                                <div class="perfil-dado" v-if="v.valor != null">
+                                    <small>{{ v.tipoContrato === 'LOCACAO' ? 'Aluguel mensal' : 'Valor do imóvel' }}</small>
+                                    <span>{{ formatarValor(v.valor) }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTRATOS DE VENDA -->
+            <div class="detalhe-bloco">
+                <div class="painel-secao-topo">
+                    <h2 class="cadastro-label detalhe-subtitulo">Contratos de venda</h2>
+                </div>
+
+                <p class="detalhe-aviso" v-if="carregando.contratos">Carregando...</p>
+                <p class="pesquisa-dica" v-else-if="contratosVenda.length === 0">Você não possui contratos de venda.</p>
+
+                <div class="painel-lista">
+                    <div class="painel-card" v-for="c in contratosVenda" :key="'V' + c.id">
+                        <div class="painel-card-info">
+                            <div class="pesquisa-card-tags">
+                                <span class="pesquisa-card-tag pesquisa-card-tag-venda">Venda</span>
+                            </div>
+                            <p class="detalhe-linha"><i class="ph ph-map-pin"></i> {{ c.endereco }}</p>
+                            <div class="perfil-dados">
+                                <div class="perfil-dado" v-for="d in dadosContrato(c)" :key="d.rotulo">
+                                    <small>{{ d.rotulo }}</small>
+                                    <span>{{ d.valor }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTRATOS DE LOCAÇÃO (com recibos para os ativos) -->
+            <div class="detalhe-bloco">
+                <div class="painel-secao-topo">
+                    <h2 class="cadastro-label detalhe-subtitulo">Contratos de locação</h2>
+                </div>
+
+                <p class="detalhe-aviso" v-if="carregando.contratos">Carregando...</p>
+                <p class="pesquisa-dica" v-else-if="contratosLocacao.length === 0">Você não possui contratos de locação.</p>
+
+                <div class="painel-lista">
+                    <div class="painel-card painel-card-coluna" v-for="c in contratosLocacao" :key="'L' + c.id">
+                        <div class="painel-card-linha">
+                            <div class="painel-card-info">
+                                <div class="pesquisa-card-tags">
+                                    <span class="pesquisa-card-tag pesquisa-card-tag-locacao">Locação</span>
+                                    <span class="pesquisa-card-tag" v-if="c.status">{{ c.status }}</span>
+                                </div>
+                                <p class="detalhe-linha"><i class="ph ph-map-pin"></i> {{ c.endereco }}</p>
+                                <div class="perfil-dados">
+                                    <div class="perfil-dado" v-for="d in dadosContrato(c)" :key="d.rotulo">
+                                        <small>{{ d.rotulo }}</small>
+                                        <span>{{ d.valor }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="painel-card-acoes" v-if="contratoAtivo(c)">
+                                <button type="button" class="pesquisa-limpar" @click="abrirRescisao(c)">
+                                    <i class="ph ph-scissors icone-pesquisa"></i>
+                                    <span>Rescindir</span>
+                                </button>
+                                <button type="button" class="pesquisa-limpar" @click="alternarRecibos(c)">
+                                    <i class="ph icone-pesquisa" :class="recibos[c.id] && recibos[c.id].aberto ? 'ph-caret-up' : 'ph-receipt'"></i>
+                                    <span>{{ recibos[c.id] && recibos[c.id].aberto ? 'Ocultar recibos' : 'Ver recibos' }}</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Dados da rescisão (contratos encerrados) -->
+                        <div class="perfil-dados" v-if="c.dataRescisao">
+                            <div class="perfil-dado">
+                                <small>Data da rescisão</small>
+                                <span>{{ formatarData(c.dataRescisao) }}</span>
+                            </div>
+                            <div class="perfil-dado" v-if="c.multa != null">
+                                <small>Multa paga</small>
+                                <span>{{ formatarValor(c.multa) }}</span>
+                            </div>
+                            <div class="perfil-dado" v-if="c.motivo">
+                                <small>Motivo</small>
+                                <span>{{ c.motivo }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Recibos do contrato -->
+                        <div class="painel-recibos" v-if="recibos[c.id] && recibos[c.id].aberto">
+                            <h3 class="painel-sublista-titulo">Recibos do contrato</h3>
+
+                            <div class="painel-recibos-filtros">
+                                <div class="pesquisa-filtro-grupo" v-if="recibos[c.id].anos.length > 1">
+                                    <label class="cadastro-label">Ano</label>
+                                    <div class="cadastro-tipo-imoveis">
+                                        <div class="opcao-tipo-imovel">
+                                            <input type="radio" :id="'rec_ano_todos_' + c.id" value="" v-model="recibos[c.id].ano" @change="carregarRecibos(c)">
+                                            <label class="cadastro-opcoes" :for="'rec_ano_todos_' + c.id">Todos</label>
+                                        </div>
+                                        <div class="opcao-tipo-imovel" v-for="a in recibos[c.id].anos" :key="a">
+                                            <input type="radio" :id="'rec_ano_' + c.id + '_' + a" :value="String(a)" v-model="recibos[c.id].ano" @change="carregarRecibos(c)">
+                                            <label class="cadastro-opcoes" :for="'rec_ano_' + c.id + '_' + a">{{ a }}</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="pesquisa-filtro-grupo">
+                                    <label class="cadastro-label">Situação</label>
+                                    <div class="cadastro-tipo-imoveis">
+                                        <div class="opcao-tipo-imovel" v-for="s in situacoes" :key="s.valor">
+                                            <input type="radio" :id="'rec_sit_' + c.id + '_' + s.id" :value="s.valor" v-model="recibos[c.id].situacao" @change="carregarRecibos(c)">
+                                            <label class="cadastro-opcoes" :for="'rec_sit_' + c.id + '_' + s.id">{{ s.rotulo }}</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p class="detalhe-aviso" v-if="recibos[c.id].carregando">Carregando recibos...</p>
+                            <p class="detalhe-aviso login-input-invalido" v-else-if="recibos[c.id].erro">{{ recibos[c.id].erro }}</p>
+                            <p class="pesquisa-dica" v-else-if="recibos[c.id].lista.length === 0">Nenhum recibo encontrado.</p>
+
+                            <div class="painel-lista" v-if="!recibos[c.id].erro">
+                                <div class="painel-recibo" v-for="r in recibos[c.id].lista" :key="r.idRecibo">
+                                    <div class="painel-recibo-topo">
+                                        <span class="painel-recibo-competencia"><i class="ph ph-receipt"></i> {{ formatarCompetencia(r) }}</span>
+                                        <span class="pesquisa-card-tag" :class="situacaoRecibo(r).classe">{{ situacaoRecibo(r).rotulo }}</span>
+                                    </div>
+                                    <div class="perfil-dados">
+                                        <div class="perfil-dado" v-for="d in dadosRecibo(r)" :key="d.rotulo">
+                                            <small>{{ d.rotulo }}</small>
+                                            <span>{{ d.valor }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- JANELA: RESCINDIR CONTRATO -->
+        <div class="painel-modal-fundo" v-if="contratoRescisao" @click.self="fecharRescisao">
+            <form class="painel-modal" @submit.prevent="enviarRescisao">
+                <div class="painel-modal-topo">
+                    <h2 class="painel-modal-titulo">Rescindir contrato</h2>
+                    <button type="button" class="painel-modal-fechar" aria-label="Fechar" @click="fecharRescisao"><i class="ph ph-x"></i></button>
+                </div>
+
+                <p class="detalhe-linha"><i class="ph ph-map-pin"></i> {{ contratoRescisao.endereco }}</p>
+
+                <p class="detalhe-aviso" v-if="simulacao.carregando">Calculando a multa...</p>
+
+                <div class="perfil-dados" v-else-if="simulacao.dados">
+                    <div class="perfil-dado">
+                        <small>Data da rescisão</small>
+                        <span>{{ formatarData(simulacao.dados.dataRescisao) }}</span>
+                    </div>
+                    <div class="perfil-dado">
+                        <small>Aluguel mensal</small>
+                        <span>{{ formatarValor(simulacao.dados.valorAluguel) }}</span>
+                    </div>
+                    <div class="perfil-dado">
+                        <small>Prazo restante</small>
+                        <span>{{ simulacao.dados.mesesRestantes }} de {{ simulacao.dados.prazoMeses }} {{ simulacao.dados.prazoMeses === 1 ? 'mês' : 'meses' }}</span>
+                    </div>
+                    <div class="perfil-dado">
+                        <small>Multa de rescisão</small>
+                        <span>{{ formatarValor(simulacao.dados.multa) }}</span>
+                    </div>
+                </div>
+                <p class="pesquisa-dica" v-if="simulacao.dados">
+                    A multa equivale a 3 aluguéis, proporcional ao tempo que faltava para o fim do contrato.
+                    A data e o valor finais são definidos pelo sistema no momento da confirmação.
+                </p>
+
+                <div class="painel-modal-linha">
+                    <input-box
+                        label="Motivo da rescisão"
+                        placeholder="Ex.: mudança de cidade"
+                        v-model="formRescisao.motivo"
+                        :erro="errosRescisao.motivo"
+                    ></input-box>
+                </div>
+                <small class="pesquisa-dica">{{ formRescisao.motivo.length }}/{{ MOTIVO_MAX }}</small>
+
+                <p v-show="errosRescisao.geral" class="login-input-invalido">{{ errosRescisao.geral }}</p>
+
+                <div class="painel-modal-botoes">
+                    <button type="button" class="pesquisa-limpar" @click="fecharRescisao">Cancelar</button>
+                    <button type="submit" class="submit-login" :disabled="enviando || simulacao.carregando || !simulacao.dados">
+                        <i class="ph ph-scissors icone-pesquisa"></i>
+                        <span>{{ enviando ? 'Rescindindo...' : 'Confirmar rescisão' }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <barra-inferior></barra-inferior>
+    </div>
+
+<script type="module" th:inline="none">
+
+import { createApp, ref, computed, onMounted } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+import BarraSuperior from '/components/BarraSuperior.js'
+import BarraInferior from '/components/BarraInferior.js'
+import InputBox from '/components/InputBox.js'
+
+createApp({
+components: {
+    BarraSuperior,
+    BarraInferior,
+    InputBox
+},
+setup() {
+
+    const STATUS_ATIVO = 'ATIVO'
+
+    // Valores aceitos pelo servidor no filtro de recibos (FiltroReciboDTO.situacao)
+    const situacoes = [
+        { id: 0, valor: '', rotulo: 'Todos' },
+        { id: 1, valor: 'PAGO', rotulo: 'Pagos' },
+        { id: 2, valor: 'PENDENTE', rotulo: 'Não pagos' }
+    ]
+
+    const visitas = ref([])
+    const contratos = ref([])
+    const recibos = ref({}) // por id do contrato de locação
+    const carregando = ref({ visitas: true, contratos: true })
+    const erro = ref('')
+    const sucesso = ref('')
+    const enviando = ref(false)
+
+    const contratosVenda = computed(() => contratos.value.filter(c => c.tipo === 'VENDA'))
+    const contratosLocacao = computed(() => contratos.value.filter(c => c.tipo === 'LOCACAO'))
+
+    // ---------- formatação (mesmos helpers das demais páginas)
+
+    const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+    const pad = (n) => String(n).padStart(2, '0')
+
+    const normalizarData = (d) => Array.isArray(d) ? `${d[0]}-${pad(d[1])}-${pad(d[2])}` : String(d).slice(0, 10)
+    const formatarData = (d) => {
+        const [a, m, dia] = normalizarData(d).split('-')
+        return `${dia}/${m}/${a}`
+    }
+    const formatarHorario = (h) => Array.isArray(h) ? `${pad(h[0])}:${pad(h[1])}` : String(h).slice(0, 5)
+    const formatarValor = (v) => v != null ? formatadorMoeda.format(v) : '—'
+
+    const rotuloGarantia = (g) => ({
+        'FIADOR': 'Fiador',
+        'DEPOSITO CAUCAO': 'Depósito caução',
+        'SEGURO FIANCA': 'Seguro fiança'
+    }[g] ?? g)
+
+    // ---------- carregamento
+
+    async function lerErrosBrutos(response) {
+        try {
+            return await response.json()
+        } catch {
+            return { geral: 'Ocorreu um erro inesperado. Tente novamente mais tarde.' }
+        }
+    }
+
+    async function buscar(url) {
+        const resposta = await fetch(url)
+        if (resposta.status === 401) {
+            window.location.href = '/login'
+            return null
+        }
+        if (!resposta.ok) {
+            const corpo = await lerErrosBrutos(resposta)
+            throw new Error(Object.values(corpo).join(' ') || 'Não foi possível carregar os dados.')
+        }
+        return resposta.json()
+    }
+
+    async function carregarVisitas() {
+        try {
+            const dados = await buscar('/api/painel/cliente/visitas')
+            if (dados) visitas.value = dados
+        } catch (e) {
+            console.error(e)
+            erro.value = e.message || 'Servidor indisponível. Verifique sua conexão e tente novamente.'
+        } finally {
+            carregando.value.visitas = false
+        }
+    }
+
+    async function carregarContratos() {
+        try {
+            const dados = await buscar('/api/painel/cliente/contratos')
+            if (dados) contratos.value = dados
+        } catch (e) {
+            console.error(e)
+            erro.value = e.message || 'Servidor indisponível. Verifique sua conexão e tente novamente.'
+        } finally {
+            carregando.value.contratos = false
+        }
+    }
+
+    // ---------- contratos
+
+    const contratoAtivo = (c) => String(c.status ?? '').toUpperCase() === STATUS_ATIVO
+
+    function dadosContrato(c) {
+        const itens = []
+        const add = (rotulo, valor) => {
+            if (valor !== null && valor !== undefined && valor !== '') itens.push({ rotulo, valor })
+        }
+
+        add('Proprietário', c.proprietario)
+        add(c.tipo === 'VENDA' ? 'Data da venda' : 'Início da locação', formatarData(c.data))
+        add(c.tipo === 'VENDA' ? 'Valor da venda' : 'Valor do aluguel', formatarValor(c.valor))
+
+        if (c.tipo === 'LOCACAO') {
+            add('Garantia', rotuloGarantia(c.garantia))
+            if (c.valorCaucao != null) add('Depósito caução', formatarValor(c.valorCaucao))
+            if (c.prazoMeses != null) add('Duração', c.prazoMeses + (c.prazoMeses === 1 ? ' mês' : ' meses'))
+            if (c.diaVencimento != null) add('Dia de vencimento', 'Dia ' + c.diaVencimento)
+        } else {
+            if (c.valorSinal != null) add('Valor do sinal', formatarValor(c.valorSinal))
+            add('Forma de pagamento', c.formaPagamento)
+            if (c.valorFinanciado != null) add('Valor financiado', formatarValor(c.valorFinanciado))
+        }
+        return itens
+    }
+
+    const novoEstadoRecibos = () => ({
+        aberto: false, carregando: false, erro: '', lista: [], anos: [], ano: '', situacao: '', requisicao: 0
+    })
+
+    function alternarRecibos(c) {
+        const estado = recibos.value[c.id] ?? (recibos.value[c.id] = novoEstadoRecibos())
+        estado.aberto = !estado.aberto
+        if (estado.aberto && estado.lista.length === 0 && !estado.erro) carregarRecibos(c, true)
+    }
+
+    async function carregarRecibos(c, primeira = false) {
+        const estado = recibos.value[c.id]
+        const numero = ++estado.requisicao
+
+        const params = new URLSearchParams()
+        if (estado.ano) params.set('ano', estado.ano)
+        if (estado.situacao) params.set('situacao', estado.situacao)
+        const consulta = params.toString()
+
+        estado.carregando = true
+        estado.erro = ''
+        try {
+            const resposta = await fetch(`/api/painel/cliente/contratos/locacao/${c.id}/recibos` + (consulta ? '?' + consulta : ''))
+            if (numero !== estado.requisicao) return
+            if (resposta.status === 401) {
+                window.location.href = '/login'
+                return
+            }
+            if (!resposta.ok) {
+                const corpo = await lerErrosBrutos(resposta)
+                estado.erro = Object.values(corpo).join(' ')
+                estado.lista = []
+                return
+            }
+            const lista = await resposta.json()
+            if (numero !== estado.requisicao) return
+            estado.lista = lista
+            
+            if (primeira) {
+                estado.anos = [...new Set(lista.map(r => r.ano))].sort((a, b) => b - a)
+            }
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            if (numero === estado.requisicao) estado.erro = 'Servidor indisponível. Verifique sua conexão e tente novamente.'
+        } finally {
+            if (numero === estado.requisicao) estado.carregando = false
+        }
+    }
+
+    const formatarCompetencia = (r) => `${pad(r.mes)}/${r.ano}`
+
+    function situacaoRecibo(r) {
+        if (r.dataPagamento) return { rotulo: 'Pago', classe: 'pesquisa-card-tag-venda' }
+        const vencimento = normalizarData(r.dataVencimento)
+        const hoje = new Date()
+        const hojeIso = `${hoje.getFullYear()}-${pad(hoje.getMonth() + 1)}-${pad(hoje.getDate())}`
+        return vencimento < hojeIso
+            ? { rotulo: 'Em atraso', classe: 'pesquisa-card-tag-atraso' }
+            : { rotulo: 'A vencer', classe: '' }
+    }
+
+    function dadosRecibo(r) {
+        const itens = []
+        const add = (rotulo, valor) => {
+            if (valor !== null && valor !== undefined && valor !== '') itens.push({ rotulo, valor })
+        }
+        add('Vencimento', formatarData(r.dataVencimento))
+        add('Valor do aluguel', formatarValor(r.valorAluguel))
+        if (Number(r.desconto) > 0) add('Desconto', formatarValor(r.desconto))
+        if (Number(r.acrescimo) > 0) add('Acréscimo', formatarValor(r.acrescimo))
+        add('Valor líquido', formatarValor(r.valorLiquido))
+        if (r.dataPagamento) {
+            add('Data do pagamento', formatarData(r.dataPagamento))
+            add('Forma de pagamento', r.formaPagamento)
+        }
+        return itens
+    }
+
+
+    const MOTIVO_MAX = 50
+
+    const contratoRescisao = ref(null)
+    const formRescisao = ref({ motivo: '' })
+    const errosRescisao = ref({})
+    const simulacao = ref({ carregando: false, dados: null })
+
+    async function abrirRescisao(c) {
+        if (!contratoAtivo(c)) return
+        sucesso.value = ''
+        contratoRescisao.value = c
+        formRescisao.value = { motivo: '' }
+        errosRescisao.value = {}
+        simulacao.value = { carregando: true, dados: null }
+
+        try {
+            const resposta = await fetch(`/api/painel/cliente/contratos/locacao/${c.id}/rescisao`)
+            if (contratoRescisao.value !== c) return
+            if (resposta.status === 401) { window.location.href = '/login'; return }
+            if (!resposta.ok) {
+                errosRescisao.value = { geral: Object.values(await lerErrosBrutos(resposta)).join(' ') }
+                return
+            }
+            simulacao.value.dados = await resposta.json()
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            if (contratoRescisao.value === c) {
+                errosRescisao.value = { geral: 'Servidor indisponível. Verifique sua conexão e tente novamente.' }
+            }
+        } finally {
+            if (contratoRescisao.value === c) simulacao.value.carregando = false
+        }
+    }
+
+    function fecharRescisao() {
+        if (enviando.value) return
+        contratoRescisao.value = null
+    }
+
+    function validarRescisao(f) {
+        const erros = {}
+        const motivo = f.motivo.trim()
+        if (!motivo) erros.motivo = 'Este campo é obrigatório'
+        else if (motivo.length > MOTIVO_MAX) erros.motivo = `Use no máximo ${MOTIVO_MAX} caracteres`
+        return erros
+    }
+
+    async function enviarRescisao() {
+        const c = contratoRescisao.value
+        const erros = validarRescisao(formRescisao.value)
+        errosRescisao.value = erros
+        if (Object.keys(erros).length > 0) return
+
+        enviando.value = true
+        try {
+            const resposta = await fetch(`/api/painel/cliente/contratos/locacao/${c.id}/rescisao`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ motivo: formRescisao.value.motivo.trim() })
+            })
+            if (resposta.status === 401) { window.location.href = '/login'; return }
+            if (!resposta.ok) {
+                const brutos = await lerErrosBrutos(resposta)
+
+                errosRescisao.value = brutos.motivo
+                    ? { motivo: brutos.motivo }
+                    : { geral: Object.values(brutos).join(' ') }
+                return
+            }
+
+            const aplicada = await resposta.json()
+            contratoRescisao.value = null
+            delete recibos.value[c.id]
+            sucesso.value = `Contrato rescindido em ${formatarData(aplicada.dataRescisao)}. Multa: ${formatarValor(aplicada.multa)}.`
+            await carregarContratos()
+        } catch (e) {
+            console.error('Erro na rede:', e)
+            errosRescisao.value = { geral: 'Servidor indisponível. Verifique sua conexão e tente novamente.' }
+        } finally {
+            enviando.value = false
+        }
+    }
+
+    onMounted(() => {
+        carregarVisitas()
+        carregarContratos()
+    })
+
+    return {
+        visitas, contratosVenda, contratosLocacao, recibos, carregando, erro, sucesso, enviando, situacoes,
+        contratoAtivo, alternarRecibos, carregarRecibos,
+        MOTIVO_MAX, contratoRescisao, formRescisao, errosRescisao, simulacao,
+        abrirRescisao, fecharRescisao, enviarRescisao,
+        dadosContrato, dadosRecibo, situacaoRecibo, formatarCompetencia,
+        formatarData, formatarHorario, formatarValor
+    }
+
+}
+}).mount('#app-painel-cliente');
+</script>
+</body>
+</html>
