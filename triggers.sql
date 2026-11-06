@@ -215,3 +215,23 @@ FOR EACH ROW EXECUTE FUNCTION fn_contrato_fechado();
 CREATE TRIGGER tgr_contrato_venda_fechado
 AFTER INSERT ON Contrato_Venda
 FOR EACH ROW EXECUTE FUNCTION fn_contrato_fechado();
+
+-------------------------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION fn_imovel_publicado() RETURNS TRIGGER AS
+$$
+BEGIN
+	IF EXISTS (SELECT 1 FROM Publicacao WHERE id_imovel=NEW.id_imovel AND ativa) THEN
+		RAISE EXCEPTION "Imóvel já está publicado";
+	END IF;
+
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER tgr_imovel_publicado
+BEFORE INSERT ON Publicacao
+FOR EACH ROW EXECUTE FUNCTION fn_imovel_publicado();
+
+-------------------------------------------------------------------------------------------
