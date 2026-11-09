@@ -153,7 +153,7 @@ body {
     min-height: 70vh; 
     
 	overflow: hidden;
-    padding-left: 8%; /* Empurra o texto um pouco para a direita, dando um respiro */
+    padding-left: 8%;
 	padding-top: 5%;
 }
 
@@ -163,7 +163,7 @@ body {
 
 .texto-boasvindas {
 
-	z-index: 2; /* Garante que o texto fique por cima se a tela encolher */
+	z-index: 2;
 
 	color: var(--cor-texto);
 	font-family: var(--fonte-titulo);
@@ -229,7 +229,7 @@ body {
 	display: flex;
 	flex-direction: column;
 
-	gap: 50px; /* Cria um espaço perfeito de 25px entre cada bloco (botões e inputs) */
+	gap: 50px;
     
     width: 100%;
     max-width: 400px;
@@ -1610,7 +1610,7 @@ img.seletor-banco-escolhido {
 	flex: 1 1 160px;
 }
 
-/* Campo de texto longo (descrição do imóvel), no mesmo desenho do .login-input-box input */
+/* Campo de texto longo (descrição do imóvel) */
 
 .painel-textarea {
 	width: 100%;
