@@ -21,7 +21,6 @@
 
             <p class="detalhe-sucesso" v-if="sucesso">{{ sucesso }}</p>
 
-            <!-- VISITAS AGENDADAS -->
             <div class="detalhe-bloco">
                 <div class="painel-secao-topo">
                     <h2 class="cadastro-label detalhe-subtitulo">Minhas visitas</h2>
@@ -60,7 +59,6 @@
                 </div>
             </div>
 
-            <!-- CONTRATOS DE VENDA -->
             <div class="detalhe-bloco">
                 <div class="painel-secao-topo">
                     <h2 class="cadastro-label detalhe-subtitulo">Contratos de venda</h2>
@@ -87,7 +85,6 @@
                 </div>
             </div>
 
-            <!-- CONTRATOS DE LOCAÇÃO (com recibos para os ativos) -->
             <div class="detalhe-bloco">
                 <div class="painel-secao-topo">
                     <h2 class="cadastro-label detalhe-subtitulo">Contratos de locação</h2>
@@ -140,7 +137,6 @@
                             </div>
                         </div>
 
-                        <!-- Recibos do contrato -->
                         <div class="painel-recibos" v-if="recibos[c.id] && recibos[c.id].aberto">
                             <h3 class="painel-sublista-titulo">Recibos do contrato</h3>
 
@@ -271,7 +267,6 @@ setup() {
 
     const STATUS_ATIVO = 'ATIVO'
 
-    // Valores aceitos pelo servidor no filtro de recibos (FiltroReciboDTO.situacao)
     const situacoes = [
         { id: 0, valor: '', rotulo: 'Todos' },
         { id: 1, valor: 'PAGO', rotulo: 'Pagos' },
@@ -289,8 +284,6 @@ setup() {
     const contratosVenda = computed(() => contratos.value.filter(c => c.tipo === 'VENDA'))
     const contratosLocacao = computed(() => contratos.value.filter(c => c.tipo === 'LOCACAO'))
 
-    // ---------- formatação (mesmos helpers das demais páginas)
-
     const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
     const pad = (n) => String(n).padStart(2, '0')
 
@@ -307,8 +300,6 @@ setup() {
         'DEPOSITO CAUCAO': 'Depósito caução',
         'SEGURO FIANCA': 'Seguro fiança'
     }[g] ?? g)
-
-    // ---------- carregamento
 
     async function lerErrosBrutos(response) {
         try {
@@ -354,8 +345,6 @@ setup() {
             carregando.value.contratos = false
         }
     }
-
-    // ---------- contratos
 
     const contratoAtivo = (c) => String(c.status ?? '').toUpperCase() === STATUS_ATIVO
 

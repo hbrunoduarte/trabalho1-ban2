@@ -74,7 +74,6 @@
                 </div>
             </div>
 
-            <!-- CONTRATOS FIRMADOS (INALTERADO) -->
             <div class="detalhe-bloco">
                 <div class="painel-secao-topo">
                     <h2 class="cadastro-label detalhe-subtitulo">Contratos firmados</h2>
@@ -108,7 +107,7 @@
 
         <!-- JANELAS MODAIS (INALTERADAS) -->
         <div class="painel-modal-fundo" v-if="modal === 'locacao'" @click.self="fecharModal">
-            <!-- (Conteúdo original do modal de locação foi mantido igual) -->
+
             <form class="painel-modal" @submit.prevent="enviarLocacao">
                 <div class="painel-modal-topo">
                     <h2 class="painel-modal-titulo">Firmar contrato de locação</h2>
@@ -163,7 +162,7 @@
         </div>
 
         <div class="painel-modal-fundo painel-modal-fundo-topo" v-if="modal === 'locacao' && modalFiador" @click.self="modalFiador = false">
-            <!-- (Conteúdo original do modal do fiador) -->
+
             <form class="painel-modal" @submit.prevent="salvarFiador">
                 <div class="painel-modal-topo">
                     <h2 class="painel-modal-titulo">Cadastro do fiador</h2>
@@ -282,7 +281,7 @@ setup() {
     const erro = ref('')
     const sucesso = ref('')
     const enviando = ref(false)
-    const mostrarArquivadas = ref(false) // Permanece como controle visual do botão na tela
+    const mostrarArquivadas = ref(false)
 
     const formatadorMoeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
     const pad = (n) => String(n).padStart(2, '0')
@@ -363,10 +362,9 @@ setup() {
         }
     }
 
-    // Requisição que bate no banco de dados para alterar o status do arquivo
     async function alternarArquivo(visita) {
         try {
-            // Nota: ajuste o nome da rota se você o nomeou diferente no Spring Boot
+
             const resposta = await fetch(`/api/painel/corretor/visitas/${visita.idVisita}/arquivar`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' }
@@ -391,7 +389,6 @@ setup() {
         await carregarVisitas()
     }
 
-    // Lógicas computadas para leitura direta do boolean que veio da API ('v.arquivada')
     const totalArquivadas = computed(() => 
         visitas.value.filter(v => v.arquivada || !v.tipoContrato).length
     )
@@ -414,8 +411,6 @@ setup() {
             carregandoContratos.value = false
         }
     }
-
-    // ---------- Lógica de formulários inalterada
 
     const modal = ref(null) 
     const visitaAtual = ref(null)
