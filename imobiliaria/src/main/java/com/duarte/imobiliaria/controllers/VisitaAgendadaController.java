@@ -5,11 +5,14 @@ import com.duarte.imobiliaria.database.interfaceDAO.CorretorDAO;
 import com.duarte.imobiliaria.database.interfaceDAO.VisitaAgendadaDAO;
 import com.duarte.imobiliaria.model.Corretor;
 import com.duarte.imobiliaria.model.VisitaAgendada;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -19,9 +22,12 @@ public class VisitaAgendadaController {
     private final VisitaAgendadaDAO visitaDAO;
     private final CorretorDAO corretorDAO;
 
-    public VisitaAgendadaController(VisitaAgendadaDAO visitaDAO, CorretorDAO corretorDAO) {
+    private final MessageSource messageSource;
+
+    public VisitaAgendadaController(VisitaAgendadaDAO visitaDAO, CorretorDAO corretorDAO, MessageSource messageSource) {
         this.visitaDAO = visitaDAO;
         this.corretorDAO = corretorDAO;
+        this.messageSource = messageSource;
     }
 
     @GetMapping("/imovel/{idImovel}")
@@ -36,10 +42,10 @@ public class VisitaAgendadaController {
     }
 
     @PostMapping
-    public ResponseEntity<VisitaAgendada> agendarVisita(@RequestBody VisitaAgendada visita) {
+    public ResponseEntity<?> agendarVisita(@RequestBody VisitaAgendada visita) {
 
         Optional<Corretor> resposta = corretorDAO.proximoParaVisita(visita);
-        if (resposta.isEmpty()) return ResponseEntity.internalServerError().build();
+        if (resposta.isEmpty()) return erro(HttpStatus.CONFLICT, "visita.corretor.indisponivel");
 
         visita.setCorretor(resposta.get());
         visitaDAO.salvar(visita);
@@ -51,5 +57,10 @@ public class VisitaAgendadaController {
     public ResponseEntity<Void> cancelarVisita(@PathVariable int id) {
         if (visitaDAO.excluir(id)) return ResponseEntity.ok().build();
         return ResponseEntity.notFound().build();
+    }
+
+    private ResponseEntity<Map<String, String>> erro(HttpStatus status, String chaveMensagem) {
+        String mensagem = messageSource.getMessage(chaveMensagem, null, chaveMensagem, LocaleContextHolder.getLocale());
+        return ResponseEntity.status(status).body(Map.of("geral", mensagem));
     }
 }

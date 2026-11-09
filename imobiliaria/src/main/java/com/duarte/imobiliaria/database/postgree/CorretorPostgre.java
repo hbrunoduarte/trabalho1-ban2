@@ -3,7 +3,6 @@ package com.duarte.imobiliaria.database.postgree;
 import com.duarte.imobiliaria.database.interfaceDAO.CorretorDAO;
 import com.duarte.imobiliaria.model.Corretor;
 import com.duarte.imobiliaria.model.VisitaAgendada;
-import io.micrometer.observation.annotation.ObservationKeyValue;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -13,10 +12,8 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -94,7 +91,7 @@ public class CorretorPostgre implements CorretorDAO {
             }
         } else {
             String sql = "UPDATE Corretor SET nome=?, email=?, senha=?, telefone=?, cpf=?, percentual_comissao=?, data_admissao=?, creci=? WHERE id_corretor=?";
-            jdbcTemplate.update(sql, corretor.getNome(), corretor.getEmail(), corretor.getTelefone(), corretor.getCpf(), corretor.getPercentualComissao(), Date.valueOf(corretor.getDataAdmissao()), corretor.getCreci(), corretor.getIdCorretor());
+            jdbcTemplate.update(sql, corretor.getNome(), corretor.getEmail(), corretor.getSenha(), corretor.getTelefone(), corretor.getCpf(), corretor.getPercentualComissao(), Date.valueOf(corretor.getDataAdmissao()), corretor.getCreci(), corretor.getIdCorretor());
         }
     }
 

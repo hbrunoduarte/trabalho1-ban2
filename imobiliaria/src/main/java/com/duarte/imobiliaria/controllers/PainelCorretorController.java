@@ -16,6 +16,7 @@ import com.duarte.imobiliaria.database.interfaceDAO.VisitaAgendadaDAO;
 import com.duarte.imobiliaria.model.*;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
+import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,8 +46,9 @@ public class PainelCorretorController {
     private final EnderecoDAO enderecoDAO;
     private final FiadorDAO fiadorDAO;
     private final TelefoneDAO telefoneDAO;
+    private final MessageSource messageSource;
 
-    public PainelCorretorController(VisitaAgendadaDAO visitaDAO, ImovelDAO imovelDAO, CorretorDAO corretorDAO, ContratoLocacaoDAO contratoLocacaoDAO, ContratoVendaDAO contratoVendaDAO, EnderecoDAO enderecoDAO, FiadorDAO fiadorDAO, TelefoneDAO telefoneDAO) {
+    public PainelCorretorController(VisitaAgendadaDAO visitaDAO, ImovelDAO imovelDAO, CorretorDAO corretorDAO, ContratoLocacaoDAO contratoLocacaoDAO, ContratoVendaDAO contratoVendaDAO, EnderecoDAO enderecoDAO, FiadorDAO fiadorDAO, TelefoneDAO telefoneDAO, MessageSource messageSource) {
         this.visitaDAO = visitaDAO;
         this.imovelDAO = imovelDAO;
         this.corretorDAO = corretorDAO;
@@ -55,6 +57,7 @@ public class PainelCorretorController {
         this.enderecoDAO = enderecoDAO;
         this.fiadorDAO = fiadorDAO;
         this.telefoneDAO = telefoneDAO;
+        this.messageSource = messageSource;
     }
 
     @GetMapping("/validarvisitas")
@@ -112,6 +115,10 @@ public class PainelCorretorController {
 
         if (!isCorretor(s)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
+        if (!dto.isContratoValido()) {
+            return ResponseEntity.badRequest().body(dto.getMensagemErro(messageSource));
+        }
+
         ContratoLocacao contrato = new ContratoLocacao(new Corretor(getIdUsuario(s)), dto);
 
         Optional<VisitaAgendada> respostaVisita = visitaDAO.buscarPorId(dto.getIdVisita());
@@ -159,6 +166,10 @@ public class PainelCorretorController {
     public ResponseEntity<?> salvarContratoVenda(@Valid @RequestBody FirmarVendaDTO dto, HttpSession s) {
 
         if (!isCorretor(s)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        if (!dto.isContratoValido()) {
+            return ResponseEntity.badRequest().body(dto.getMensagemErro(messageSource));
+        }
 
         ContratoVenda contrato = new ContratoVenda(new Corretor(getIdUsuario(s)), dto);
 

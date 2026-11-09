@@ -20,6 +20,6 @@ public class ConfiguracaoWeb implements WebMvcConfigurer {
                         "/api/login", "/api/login/logout",
                         "/api/clientes", "/api/proprietarios", "/api/corretores",
                         "/api/proprietarios/validar",
-                        "/api/enderecos", "/api/imoveis/tipos");
+                        "/api/enderecos/**", "/api/imoveis/tipos");
     }
 }

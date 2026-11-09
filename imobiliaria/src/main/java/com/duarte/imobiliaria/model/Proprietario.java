@@ -8,8 +8,8 @@ import java.util.regex.Pattern;
 
 public class Proprietario {
 
-    private static final String REGEX_DADOS_BANCARIOS = "Bco:(\\d+)\\s+Ag:([a-zA-Z0-9]+)\\s+Cc:([a-zA-Z0-9]+)-([a-zA-Z0-9]+)";
-    private static final String FORM_DADOS_BANCARIOS = "Bco:%d Ag:%s Cc:%s-%s";
+    private static final String REGEX_DADOS_BANCARIOS = "Bco:(\\d+)\\s+Ag:([a-zA-Z0-9]+)\\s+((Cc)|(Cp)):([a-zA-Z0-9]+)-([a-zA-Z0-9]+)";
+    private static final String FORM_DADOS_BANCARIOS = "Bco:%d Ag:%s %s:%s-%s";
 
     private Integer idProprietario;
     private Character tipo; // 'F' ou 'J'
@@ -47,7 +47,10 @@ public class Proprietario {
         this.cnpj = dto.getCnpj();
         this.email = dto.getEmail();
         this.senha = dto.getSenha();
-        this.dadosBancarios = String.format(FORM_DADOS_BANCARIOS, CodigoBancos.getCodigoByOrdinal(dto.getBanco()), dto.getAgencia(), dto.getConta(), dto.getDv());
+        this.dadosBancarios = String.format(FORM_DADOS_BANCARIOS,
+                CodigoBancos.getCodigoByOrdinal(dto.getBanco()),
+                dto.getAgencia(), !Boolean.FALSE.equals(dto.getCorrente()) ? "Cc" : "Cp",
+                dto.getConta(), dto.getDv());
         this.nome = dto.getNome();
         this.razaoSocial = dto.getRazaoSocial();
         this.endereco = new Endereco(dto.getIdEndereco());
@@ -157,8 +160,9 @@ public class Proprietario {
             CodigoBancos.getOrdinalByCodigo(Integer.valueOf(matcher.group(1)))
         );
         dto.setAgencia(matcher.group(2));
-        dto.setConta(matcher.group(3));
-        dto.setDv(matcher.group(4));
+        dto.setCorrente("Cc".equals(matcher.group(3)));
+        dto.setConta(matcher.group(4));
+        dto.setDv(matcher.group(5));
 
         return dto;
     }

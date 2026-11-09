@@ -10,6 +10,7 @@ import jakarta.validation.constraints.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,35 +28,11 @@ public class ClienteController {
         this.telefoneDAO = telefoneDAO;
     }
 
-    @GetMapping
-    public ResponseEntity<List<Cliente>> listarTodos() {
-        return ResponseEntity.ok(clienteDAO.listarTodos());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Cliente> buscarPorId(@PathVariable int id) {
-        Optional<Cliente> cliente = clienteDAO.buscarPorId(id);
-        return cliente.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/{cpf}")
-    public ResponseEntity<Cliente> buscarPorCpf(@PathVariable String cpf) {
-        Optional<Cliente> cliente = clienteDAO.buscarPorCpf(cpf);
-        return cliente.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
+    @Transactional
     @PostMapping
     public ResponseEntity<?> salvar(@Valid @RequestBody ClienteDTO dto) {
-        Cliente cliente = new Cliente();
-        cliente.setRendaMensal(Double.parseDouble(dto.getRendaMensal().replace(',', '.')));
-        cliente.setProfissao(dto.getProfissao().trim());
-        cliente.setTipoInteressado(dto.getTipoInteressado());
-        cliente.setCpf(dto.getCpf());
-        cliente.setEmail(dto.getEmail().trim());
-        cliente.setSenha(dto.getSenha().trim());
-        cliente.setNome(dto.getNome().trim());
+
+        Cliente cliente = new Cliente(dto);
 
         clienteDAO.salvar(cliente);
         telefoneDAO.salvarDoCliente(dto.getTelefones().stream()

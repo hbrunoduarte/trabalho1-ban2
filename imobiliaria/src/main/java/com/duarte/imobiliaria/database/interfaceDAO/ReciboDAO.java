@@ -8,4 +8,5 @@ import java.util.List;
 public interface ReciboDAO {
     List<ReciboAluguel> filtrar(FiltroReciboDTO filtro);
     List<ReciboAluguel> buscarPorLocacao(int idLocacao);
+    int gerarRecibosPendentes();
 }

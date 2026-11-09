@@ -43,19 +43,20 @@ public class ProprietarioPostgre implements ProprietarioDAO {
     @Override
     public void salvar(Proprietario p) {
         if (p.getIdProprietario() == null || p.getIdProprietario() == 0) {
-            String sql = "INSERT INTO Proprietario (tipo, cpf, cnpj, email, dados_bancario, nome, razao_social, id_endereco) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO Proprietario (tipo, cpf, cnpj, email, senha, dados_bancario, nome, razao_social, id_endereco) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             KeyHolder keyHolder = new GeneratedKeyHolder();
 
             jdbcTemplate.update(connection -> {
-                PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+                PreparedStatement ps = connection.prepareStatement(sql, new String[] {"id_proprietario"});
                 ps.setString(1, p.getTipo().toString());
                 ps.setString(2, p.getCpf());
                 ps.setString(3, p.getCnpj());
                 ps.setString(4, p.getEmail());
-                ps.setString(5, p.getDadosBancarios());
-                ps.setString(6, p.getNome());
-                ps.setString(7, p.getRazaoSocial());
-                ps.setInt(8, p.getEndereco().getIdEndereco());
+                ps.setString(5, p.getSenha());
+                ps.setString(6, p.getDadosBancarios());
+                ps.setString(7, p.getNome());
+                ps.setString(8, p.getRazaoSocial());
+                ps.setInt(9, p.getEndereco().getIdEndereco());
                 return ps;
             }, keyHolder);
 
@@ -63,8 +64,8 @@ public class ProprietarioPostgre implements ProprietarioDAO {
                 p.setIdProprietario(keyHolder.getKey().intValue());
             }
         } else {
-            String sql = "UPDATE Proprietario SET tipo=?, cpf=?, cnpj=?, email=?, dados_bancario=?, nome=?, razao_social=?, id_endereco=? WHERE id_proprietario=?";
-            jdbcTemplate.update(sql, p.getTipo(), p.getCpf(), p.getCnpj(), p.getEmail(), p.getDadosBancarios(), p.getNome(), p.getRazaoSocial(), p.getEndereco().getIdEndereco(), p.getIdProprietario());
+            String sql = "UPDATE Proprietario SET tipo=?, cpf=?, cnpj=?, email=?, senha=?, dados_bancario=?, nome=?, razao_social=?, id_endereco=? WHERE id_proprietario=?";
+            jdbcTemplate.update(sql, p.getTipo(), p.getCpf(), p.getCnpj(), p.getEmail(), p.getSenha(), p.getDadosBancarios(), p.getNome(), p.getRazaoSocial(), p.getEndereco().getIdEndereco(), p.getIdProprietario());
         }
     }
 

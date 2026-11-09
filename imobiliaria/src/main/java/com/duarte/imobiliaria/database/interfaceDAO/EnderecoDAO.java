@@ -10,4 +10,5 @@ public interface EnderecoDAO {
     Optional<Endereco> buscarPorId(int id);
     Optional<Endereco> buscarEndereco(int cep, int numero);
     Optional<Endereco> buscarDadosCep(int cep);
+    void remover(int idEndereco);
 }

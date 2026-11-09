@@ -6,8 +6,6 @@ import com.duarte.imobiliaria.controllers.DTO.PublicacaoDetalheDTO;
 import com.duarte.imobiliaria.controllers.DTO.PublicacaoPesquisaDTO;
 import com.duarte.imobiliaria.database.interfaceDAO.PublicacaoDAO;
 import com.duarte.imobiliaria.model.Endereco;
-import com.duarte.imobiliaria.model.Foto;
-import com.duarte.imobiliaria.model.Imovel;
 import com.duarte.imobiliaria.model.Publicacao;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -16,10 +14,8 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import javax.swing.text.html.Option;
 import java.sql.Date;
 import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.sql.Types;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -250,9 +246,15 @@ public class PublicacaoPostgre implements PublicacaoDAO {
 
         List<Object> parametros = new ArrayList<>();
 
-        sql.append("AND i.valor>=? AND i.valor<=? ");
-        parametros.add(filtro.getValorMin());
-        parametros.add(filtro.getValorMax());
+        if (filtro.getValorMin() != null) {
+            sql.append("AND i.valor>=? ");
+            parametros.add(filtro.getValorMin());
+        }
+
+        if (filtro.getValorMax() != null) {
+            sql.append("AND i.valor<=? ");
+            parametros.add(filtro.getValorMax());
+        }
 
         if (filtro.getCep() != null) {
 

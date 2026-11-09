@@ -222,8 +222,12 @@ setup() {
             const resposta = await fetch('/api/imoveis/maior_preco/' + tipoPublicacao)
             if (resposta.ok) {
                 const valorTexto = await resposta.text();
+                const tetoAntigo = tetoPreco.value
                 tetoPreco.value = parseFloat(valorTexto);
-                filtro.value.valorMax = filtro.value.valorMax <= tetoPreco.value ? filtro.value.valorMax : tetoPreco.value
+                if (filtro.value.valorMax >= tetoAntigo || filtro.value.valorMax > tetoPreco.value) {
+                    filtro.value.valorMax = tetoPreco.value
+                }
+                if (filtro.value.valorMin > filtro.value.valorMax) filtro.value.valorMin = filtro.value.valorMax
             }
         } catch (erro) {
             console.error('Falha ao obter valor máximo:', erro)
@@ -253,6 +257,8 @@ setup() {
         for (const [chave, valor] of Object.entries(filtro.value)) {
             let texto = String(valor).trim()
             if (chave === 'cep') texto = texto.replace(/\D/g, '')
+            if (chave === 'valorMin' && Number(valor) <= 0) continue
+            if (chave === 'valorMax' && Number(valor) >= tetoPreco.value) continue
             if (texto !== '') params.append(chave, texto)
         }
 

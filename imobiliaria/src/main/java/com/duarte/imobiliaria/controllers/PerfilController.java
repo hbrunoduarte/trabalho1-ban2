@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -103,11 +104,8 @@ public class PerfilController {
 
         } else if (u.tipo() == TipoUsuarioLogado.PROPRIETARIO) {
 
-            Optional<Endereco> resposta = enderecoDAO.buscarEndereco(Integer.parseInt(perfil.getEndereco().getCep()), perfil.getEndereco().getNumero());
-            if (resposta.isEmpty()) return ResponseEntity.badRequest().build();
-
             ProprietarioDTO dto = perfil.getProprietario();
-            dto.setIdEndereco(resposta.get().getIdEndereco());
+            if (dto.getIdEndereco() == null) return ResponseEntity.badRequest().build();
             proprietarioDAO.salvar(new Proprietario(u.id(), dto));
 
         } else {
@@ -157,6 +155,7 @@ public class PerfilController {
         return ResponseEntity.ok().build();
     }
 
+    @Transactional
     @PostMapping("/endereco")
     public ResponseEntity<?> salvarEndereco(@Valid @RequestBody EnderecoDTO enderecoDTO, HttpSession sessao) {
 

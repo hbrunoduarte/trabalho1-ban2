@@ -23,7 +23,7 @@
                         <form class="login-input" @submit.prevent="enviarDados">
                             <input-box
                                 label="Identificação:"
-                                placeholder="Digite seu e-mail"
+                                :placeholder="'Digite seu e-mail ou CPF' + (isProprietario ? ' ou CNPJ' : '')"
                                 v-model="loginForm.login"
                                 :erro="errosForm['login']">
                             </input-box>
@@ -99,7 +99,7 @@ setup() {
 
         try {
 
-            const response = await fetch('http://localhost:8080/api/login', {
+            const response = await fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

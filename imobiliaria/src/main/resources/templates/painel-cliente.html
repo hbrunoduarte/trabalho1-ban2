@@ -51,7 +51,7 @@
                                     <span>{{ formatarData(v.data) }}<template v-if="v.horario"> às {{ formatarHorario(v.horario) }}</template></span>
                                 </div>
                                 <div class="perfil-dado" v-if="v.valor != null">
-                                    <small>{{ v.tipoContrato === 'LOCACAO' ? 'Aluguel mensal' : 'Valor do imóvel' }}</small>
+                                    <small>{{ v.tipoContrato === 'LOCAÇÃO' ? 'Aluguel mensal' : 'Valor do imóvel' }}</small>
                                     <span>{{ formatarValor(v.valor) }}</span>
                                 </div>
                             </div>

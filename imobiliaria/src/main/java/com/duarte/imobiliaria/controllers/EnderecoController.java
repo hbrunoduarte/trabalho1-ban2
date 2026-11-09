@@ -20,20 +20,6 @@ public class EnderecoController {
         this.enderecoDAO = enderecoDAO;
     }
 
-    @GetMapping("/id/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable int id) {
-        return enderecoDAO.buscarPorId(id)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/{cep}/{numero}")
-    public ResponseEntity<Endereco> buscarEndereco(@PathVariable int cep, @PathVariable int numero) {
-        return enderecoDAO.buscarEndereco(cep, numero)
-                .map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
     @PostMapping
     public ResponseEntity<?> salvar(@Valid @RequestBody EnderecoDTO dto) {
         String complemento = dto.getComplemento() == null || dto.getComplemento().isBlank()
@@ -52,5 +38,11 @@ public class EnderecoController {
         enderecoDAO.salvar(endereco);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(endereco);
+    }
+
+    @DeleteMapping("/{idEndereco}")
+    public ResponseEntity<?> remover(@PathVariable int idEndereco) {
+        enderecoDAO.remover(idEndereco);
+        return ResponseEntity.ok().build();
     }
 }

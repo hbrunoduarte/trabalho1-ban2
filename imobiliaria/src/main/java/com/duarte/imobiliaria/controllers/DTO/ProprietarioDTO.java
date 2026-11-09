@@ -66,6 +66,9 @@ public class ProprietarioDTO {
     @Pattern(regexp = ValidacaoConstants.DV_PATTERN, message = "{cadastro.dv.formato}", groups = ValidacaoFormato.class)
     private String dv;
 
+    @NotNull(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    private Boolean isCorrente;
+
     @NotEmpty(message = "{cadastro.telefones.insuficientes}", groups = ValidacaoBasica.class)
     @Size(max = ValidacaoConstants.TELEFONES_MAX_SIZE, message = "{cadastro.telefones.size}", groups = ValidacaoAvancada.class)
     private List<
@@ -169,14 +172,19 @@ public class ProprietarioDTO {
         this.dv = dv;
     }
 
+    public Boolean getCorrente() {
+        return isCorrente;
+    }
+
+    public void setCorrente(Boolean corrente) {
+        isCorrente = corrente;
+    }
+
     public boolean isPessoaFisica() {
         return tipo.equals("F");
     }
 
-    public List<
-            @NotBlank(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
-            @Pattern(regexp = ValidacaoConstants.TELEFONE_PATTERN, message = "{cadastro.telefone.formato}", groups = ValidacaoFormato.class)
-                    String> getTelefones() {
+    public List<String> getTelefones() {
         return telefones;
     }
 

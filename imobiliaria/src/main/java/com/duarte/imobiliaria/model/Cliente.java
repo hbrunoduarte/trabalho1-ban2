@@ -31,13 +31,13 @@ public class Cliente {
     }
 
     public Cliente(ClienteDTO dto) {
-        nome = dto.getNome();
+        nome = dto.getNome().trim();
         cpf = dto.getCpf();
-        email = dto.getEmail();
-        senha = dto.getSenha();
+        email = dto.getEmail().trim();
+        senha = dto.getSenha().trim();
         tipoInteressado = dto.getTipoInteressado();
-        profissao = dto.getProfissao();
-        rendaMensal = Double.valueOf(dto.getRendaMensal());
+        profissao = dto.getProfissao().trim();
+        rendaMensal = Double.parseDouble(dto.getRendaMensal().replace(',', '.'));
     }
 
     public Cliente(Integer idCliente, ClienteDTO dto) {

@@ -150,6 +150,13 @@
                         </div>
                         <div class="cadastro-db-dv-tipoconta">
                             <input-box label="Dígito verificador" placeholder="Dígito verificador" v-model="formBanco.dv" :erro="status.banco.erros.dv"></input-box>
+                            <div class="cadastro-tipoconta">
+                                <label class="cadastro-label">Tipo de conta</label><br>
+                                <input type="radio" id="perfil_corrente" v-model="formBanco.corrente" :value="true">
+                                <label class="cadastro-opcoes" for="perfil_corrente">Corrente</label>
+                                <input type="radio" id="perfil_poupanca" v-model="formBanco.corrente" :value="false">
+                                <label class="cadastro-opcoes" for="perfil_poupanca">Poupança</label>
+                            </div>
                         </div>
                     </div>
                     <div class="box-seletor-banco">
@@ -333,7 +340,8 @@ setup() {
             banco: p.banco ?? 0,
             agencia: p.agencia ?? '',
             conta: p.conta ?? '',
-            dv: p.dv ?? ''
+            dv: p.dv ?? '',
+            corrente: p.corrente !== false
         } : null
     }
 
@@ -439,6 +447,7 @@ setup() {
                 u.agencia = formBanco.value.agencia;
                 u.conta = formBanco.value.conta;
                 u.dv = formBanco.value.dv;
+                u.corrente = formBanco.value.corrente;
             }
 
             const resposta = await fetch(url, {

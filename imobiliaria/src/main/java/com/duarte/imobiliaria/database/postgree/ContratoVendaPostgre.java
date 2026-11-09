@@ -126,8 +126,8 @@ public class ContratoVendaPostgre implements ContratoVendaDAO {
                     contrato.getValorFinanciado(), contrato.getValorComissao(),
                     contrato.getCliente().getIdCliente(),
                     contrato.getProprietario().getIdProprietario(),
-                    contrato.getCorretor().getIdCorretor(),
-                    contrato.getImovel().getIdImovel(), contrato.getIdVenda());
+                    contrato.getImovel().getIdImovel(),
+                    contrato.getCorretor().getIdCorretor(), contrato.getIdVenda());
         }
     }
 

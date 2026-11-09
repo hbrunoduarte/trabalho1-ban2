@@ -45,32 +45,4 @@ public class FotoController {
 
         return ResponseEntity.ok(dto);
     }
-
-    @PostMapping("/upload")
-    public ResponseEntity<String> uploadDeFoto(
-            @RequestParam("arquivo") MultipartFile arquivo,
-            @RequestParam("idImovel") Integer idImovel) {
-
-        try {
-            if (arquivo.isEmpty()) {
-                return ResponseEntity.badRequest().body("Nenhum arquivo foi enviado.");
-            }
-
-            Foto novaFoto = new Foto();
-            novaFoto.setTipo(arquivo.getContentType()); // Ex: "image/png"
-            novaFoto.setImagem(arquivo.getBytes());
-            novaFoto.setIdImovel(idImovel);
-
-            fotoDAO.salvar(novaFoto);
-
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("Foto salva com sucesso! ID: " + novaFoto.getIdFoto());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Erro ao processar o arquivo recebido.");
-        }
-    }
-
 }

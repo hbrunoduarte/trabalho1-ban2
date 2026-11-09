@@ -28,19 +28,13 @@ public class ImovelController {
         this.tipoImovelDAO = tipoImovelDAO;
     }
 
-    @GetMapping("/id/{id}")
-    public ResponseEntity<Imovel> getImovel(@PathVariable int id) {
-        Optional<Imovel> resposta = imovelDAO.buscarPorId(id);
-        return resposta.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
     @GetMapping("/maior_preco/")
     public ResponseEntity<?> getMaiorPreco() {
         try {
             Optional<Float> resposta = imovelDAO.buscarMaiorPreco(null);
             return resposta.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
         } catch (SQLException _) {
-            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST);
+            return ResponseEntity.badRequest().body(java.util.Map.of("geral", "Não foi possível obter o maior preço"));
         }
     }
 
@@ -50,14 +44,8 @@ public class ImovelController {
             Optional<Float> resposta = imovelDAO.buscarMaiorPreco(tipoPublicacao);
             return resposta.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.noContent().build());
         } catch (SQLException _) {
-            throw new HttpClientErrorException(HttpStatus.BAD_REQUEST);
+            return ResponseEntity.badRequest().body(java.util.Map.of("geral", "Não foi possível obter o maior preço"));
         }
-    }
-
-    @GetMapping("/proprietarios/{idProprietario}")
-    public ResponseEntity<List<Imovel>> listarImoveisDoProprietario(@PathVariable int idProprietario) {
-        List<Imovel> imoveis = imovelDAO.buscarPorProprietario(idProprietario);
-        return imoveis.isEmpty() ? ResponseEntity.ok(imoveis) : ResponseEntity.noContent().build();
     }
 
     @GetMapping("/tipos")

@@ -34,8 +34,8 @@ public class VisitaAgendadaPostgre implements VisitaAgendadaDAO {
             "JOIN Endereco e ON e.id_endereco = i.id_endereco " +
             "WHERE %s = ? %s %s ";
 
-    private static final String CLAUSULA_ATUAIS = "AND data >= CURRENT_DATE";
-    private static final String CLAUSULA_ANTIGAS = "AND data < CURRENT_DATE";
+    private static final String CLAUSULA_ATUAIS = "AND (data > CURRENT_DATE OR (data = CURRENT_DATE AND horario >= CURRENT_TIME))";
+    private static final String CLAUSULA_ANTIGAS = "AND (data < CURRENT_DATE OR (data = CURRENT_DATE AND horario < CURRENT_TIME))";
     private static final String CLAUSULA_POTENCIAL_CONTRATO = "AND v.potencial_contrato";
     private static final String CLAUSULA_ORDENACAO = "ORDER BY v.data %s, v.horario %s";
 
@@ -54,6 +54,7 @@ public class VisitaAgendadaPostgre implements VisitaAgendadaDAO {
         v.setCorretor(new Corretor(rs.getInt("id_corretor")));
         v.setCliente(new Cliente(rs.getInt("id_cliente")));
         v.setImovel(new Imovel(rs.getInt("id_imovel")));
+        v.setArquivada(!rs.getBoolean("potencial_contrato"));
         return v;
     };
 

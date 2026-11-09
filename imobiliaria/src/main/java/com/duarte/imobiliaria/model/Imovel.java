@@ -1,23 +1,61 @@
 package com.duarte.imobiliaria.model;
 
 import com.duarte.imobiliaria.controllers.DTO.ImovelPainelDTO;
+import com.duarte.imobiliaria.formsValidation.groups.ValidacaoAvancada;
+import com.duarte.imobiliaria.formsValidation.groups.ValidacaoBasica;
+import com.duarte.imobiliaria.formsValidation.groups.ValidacaoFormato;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.GroupSequence;
+import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
 
+@GroupSequence({ValidacaoBasica.class, ValidacaoFormato.class, ValidacaoAvancada.class, Imovel.class})
 public class Imovel {
 
     private Integer idImovel;
+
+    @NotNull(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    @Positive(message = "{cadastro.tipoimovel.obrigatorio}", groups = ValidacaoAvancada.class)
     private Integer tipo;
+
+    @NotNull(message = "{cadastro.endereco.obrigatorio}", groups = ValidacaoBasica.class)
     private Endereco endereco;
+
     private Proprietario proprietario;
+
+    @NotNull(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    @Positive(message = "{imovel.area.invalida}", groups = ValidacaoAvancada.class)
     private Float areaTotal;
+
+    @NotNull(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    @PositiveOrZero(message = "{imovel.quantidade.invalida}", groups = ValidacaoAvancada.class)
     private Integer qtdDormitorios;
+
+    @NotNull(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    @PositiveOrZero(message = "{imovel.quantidade.invalida}", groups = ValidacaoAvancada.class)
     private Integer qtdBanheiros;
+
+    @NotNull(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    @PositiveOrZero(message = "{imovel.quantidade.invalida}", groups = ValidacaoAvancada.class)
     private Integer qtdVagas;
+
+    @NotNull(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    @Min(value = 1500, message = "{imovel.ano.invalido}", groups = ValidacaoAvancada.class)
+    @Max(value = 2100, message = "{imovel.ano.invalido}", groups = ValidacaoAvancada.class)
     private Integer anoConstrucao;
+
+    @NotBlank(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    @Size(max = 150, message = "{imovel.descricao.size}", groups = ValidacaoAvancada.class)
     private String descricao;
+
+    @NotNull(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    @Digits(integer = 13, fraction = 2, message = "{imovel.valor.invalido}", groups = ValidacaoFormato.class)
+    @Positive(message = "{imovel.valor.invalido}", groups = ValidacaoAvancada.class)
     private BigDecimal valor;
+
+    @NotBlank(message = "{cadastro.campo.obrigatorio}", groups = ValidacaoBasica.class)
+    @Pattern(regexp = "indisponível|disponível para venda|disponível para locação", message = "{imovel.status.invalido}")
     private String status;
 
     public Imovel() {}
@@ -137,6 +175,7 @@ public class Imovel {
         this.status = status;
     }
 
+    @JsonIgnore
     public String tipoContrato() {
         if (isVenda())
             return "VENDA";
@@ -171,23 +210,5 @@ public class Imovel {
                 status,
                 idPublicacao
         );
-    }
-
-    @Override
-    public String toString() {
-        return "Imovel{" +
-                "idImovel=" + idImovel +
-                ", tipo=" + tipo +
-                ", endereco=" + endereco +
-                ", proprietario=" + proprietario +
-                ", areaTotal=" + areaTotal +
-                ", qtdDormitorios=" + qtdDormitorios +
-                ", qtdBanheiros=" + qtdBanheiros +
-                ", qtdVagas=" + qtdVagas +
-                ", anoConstrucao=" + anoConstrucao +
-                ", descricao='" + descricao + '\'' +
-                ", valor=" + valor +
-                ", status='" + status + '\'' +
-                '}';
     }
 }

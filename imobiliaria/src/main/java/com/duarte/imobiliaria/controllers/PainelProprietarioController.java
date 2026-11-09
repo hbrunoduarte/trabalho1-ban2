@@ -109,16 +109,23 @@ public class PainelProprietarioController {
 
         if (!isProprietario(sessao)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
+        if (imovel.getEndereco().getIdEndereco() == null)
+            return erro(HttpStatus.BAD_REQUEST, "endereco", "imovel.endereco.invalido");
+
         imovel.setProprietario(new Proprietario(getIdUsuario(sessao)));
         imovelDAO.salvar(imovel);
 
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
+    @Transactional
     @PostMapping("/publicacoes")
-    public ResponseEntity<?> criarPublicacao(@RequestBody PublicacaoCadastroDTO dto, HttpSession sessao) {
+    public ResponseEntity<?> criarPublicacao(@Valid @RequestBody PublicacaoCadastroDTO dto, HttpSession sessao) {
 
         if (!isProprietario(sessao)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+
+        if (dto.indiceCapa() >= dto.fotos().size())
+            return erro(HttpStatus.BAD_REQUEST, "indiceCapa", "publicacao.capa.invalida");
 
         List<Foto> fotos = dto.fotos().stream()
                             .map(f -> new Foto(dto.idImovel(), f)).toList();

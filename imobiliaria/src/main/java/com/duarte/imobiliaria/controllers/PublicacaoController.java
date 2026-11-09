@@ -46,7 +46,7 @@ public class PublicacaoController {
         dto.setTelefonesProprietario(tp.stream().map(TelefoneProprietario::getTelefone).toList());
 
         List<VisitaAgendada> visitas = visitaAgendadaDAO.listarPorImovel(dto.getIdImovel(), true, false);
-        dto.setVisitas(visitas.stream().map(v -> new VisitaAgendadaDTO(v.getData(), v.getHorario())).toList());
+        dto.setVisitas(visitas.stream().filter(VisitaAgendada::isPotencialContrato).map(v -> new VisitaAgendadaDTO(v.getData(), v.getHorario())).toList());
 
         return ResponseEntity.ok(dto);
     }

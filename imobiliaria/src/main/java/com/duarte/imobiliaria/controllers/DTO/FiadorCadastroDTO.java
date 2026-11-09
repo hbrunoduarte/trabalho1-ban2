@@ -29,7 +29,6 @@ public class FiadorCadastroDTO {
     @Cpf(message = "{cadastro.cpf.invalido}", groups = ValidacaoAvancada.class)
     private String cpf;
 
-    // Enviado em Base64 no JSON (mesmo formato do FiadorController.FiadorDTO)
     @NotEmpty(message = "Anexe o comprovante de renda do fiador", groups = ValidacaoBasica.class)
     @Size(max = COMPROVANTE_MAX_BYTES, message = "O comprovante de renda deve ter no máximo 5 MB", groups = ValidacaoAvancada.class)
     private byte[] comprovanteRenda;

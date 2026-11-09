@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.Validator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -30,48 +31,11 @@ public class ProprietarioController {
         this.validator = validator;
     }
 
-    @GetMapping
-    public ResponseEntity<List<Proprietario>> listarTodos() {
-        return ResponseEntity.ok(proprietarioDAO.listarTodos());
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Proprietario> buscarPorId(@PathVariable int id) {
-        Optional<Proprietario> proprietario = proprietarioDAO.buscarPorId(id);
-        return proprietario.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/{cpf}")
-    public ResponseEntity<Proprietario> buscarPorCpf(@PathVariable String cpf) {
-        Optional<Proprietario> proprietario = proprietarioDAO.buscarPorCpf(cpf);
-        return proprietario.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
-    @GetMapping("/{cnpj}")
-    public ResponseEntity<Proprietario> buscarPorCnpj(@PathVariable String cnpj) {
-        Optional<Proprietario> proprietario = proprietarioDAO.buscarPorCnpj(cnpj);
-        return proprietario.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
-    }
-
+    @Transactional
     @PostMapping
     public ResponseEntity<?> salvar(@Valid @RequestBody ProprietarioDTO dto) {
 
-        boolean pessoaFisica = dto.isPessoaFisica();
-
-        Proprietario p = new Proprietario();
-        p.setTipo(dto.getTipo().charAt(0));
-        p.setCpf(pessoaFisica ? dto.getCpf() : null);
-        p.setCnpj(pessoaFisica ? null : dto.getCnpj());
-        p.setEmail(dto.getEmail().trim());
-        p.setSenha(dto.getSenha().trim());
-        p.setDadosBancarios(String.format("Bco:%d Ag:%s Cc:%s-%s",
-                CodigoBancos.getCodigoByOrdinal(dto.getBanco()), dto.getAgencia(), dto.getConta(), dto.getDv().toUpperCase()));
-        p.setNome(pessoaFisica ? dto.getNome().trim() : null);
-        p.setRazaoSocial(pessoaFisica ? null : dto.getRazaoSocial().trim());
-        p.setEndereco(new Endereco(dto.getIdEndereco()));
+        Proprietario p = new Proprietario(dto);
 
         proprietarioDAO.salvar(p);
         telefoneDAO.salvarDoProprietario(dto.getTelefones().stream()

@@ -68,4 +68,10 @@ public class ReciboPostgre implements ReciboDAO {
         String sql = "SELECT * FROM Recibo_Aluguel WHERE id_locacao=? " + CLAUSULA_ORDENACAO;
         return jdbcTemplate.query(sql, rowMapper, idLocacao);
     }
+
+    @Override
+    public int gerarRecibosPendentes() {
+        Integer qtd = jdbcTemplate.queryForObject("SELECT fn_gerar_recibos()", Integer.class);
+        return qtd == null ? 0 : qtd;
+    }
 }

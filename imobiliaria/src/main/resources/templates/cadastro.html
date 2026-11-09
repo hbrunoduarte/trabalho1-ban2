@@ -27,8 +27,8 @@
                         </div>
                     </div>
                     <input-box
-                        label="Nome completo"
-                        placeholder="Digite seu nome"
+                        label="Nome completo / Razão social"
+                        placeholder="Digite seu nome / razão social"
                         v-model="cadastroForm.nome"
                         :erro="errosForm.nome"
                     ></input-box>
@@ -419,6 +419,7 @@ setup() {
                     banco: db.banco,
                     agencia: db.agencia,
                     conta: db.conta,
+                    corrente: db.isCorrente,
                     dv: db.dv,
                     nome: !isPJ ? cadastroForm.value.nome : null,
                     razaoSocial: isPJ ? cadastroForm.value.nome : null,
@@ -464,8 +465,13 @@ setup() {
             });
 
             if (!response.ok) {
+                if (!cadastroForm.value.isCliente) {
+                    await fetch('/api/enderecos/' + payload.idEndereco, {
+                        method: 'DELETE'
+                    })
+                }
                 errosForm.value = await lerErros(response);
-                enviando.value = false
+                enviando.value = false;
                 alert('Erro no cadastro, verifique os campos.');
                 return;
             }

@@ -120,4 +120,9 @@ public class EnderecoPostgre implements EnderecoDAO {
 
         return resultados.isEmpty() ? Optional.empty() : Optional.of(resultados.getFirst());
     }
+
+    @Override
+    public void remover(int idEndereco) {
+        jdbcTemplate.update("DELETE FROM Endereco WHERE id_endereco=?", idEndereco);
+    }
 }

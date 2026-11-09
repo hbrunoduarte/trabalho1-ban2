@@ -8,7 +8,7 @@ public enum TipoUsuarioLogado {
     CORRETOR;
 
     public static TipoUsuarioLogado getTipo(int n) {
-        if (n < 0 || n > TipoUsuarioLogado.values().length)
+        if (n < 0 || n >= TipoUsuarioLogado.values().length)
             throw new IllegalArgumentException();
         return TipoUsuarioLogado.values()[n];
     }

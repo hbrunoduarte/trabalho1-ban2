@@ -52,7 +52,7 @@ public class PainelClienteController {
         if (!isCliente(sessao)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
 
         List<VisitaAgendada> visitas = visitaDAO.buscarPorId(getIdUsuario(sessao), true, false, TipoUsuarioLogado.CLIENTE);
-        return ResponseEntity.ok(visitas.stream().map(VisitaAgendada::getPainelDTO).toList());
+        return ResponseEntity.ok(visitas.stream().filter(VisitaAgendada::isPotencialContrato).map(VisitaAgendada::getPainelDTO).toList());
     }
 
     @GetMapping("/contratos")
