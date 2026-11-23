@@ -201,7 +201,7 @@ BEGIN
 	WHERE id_imovel = NEW.id_imovel;
 
 	DELETE FROM Publicacao WHERE id_imovel = NEW.id_imovel;
-	DELETE FROM Foto       WHERE id_imovel = NEW.id_imovel;
+	DELETE FROM Foto WHERE id_imovel = NEW.id_imovel;
 
 	RETURN NEW;
 END;
